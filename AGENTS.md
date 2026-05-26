@@ -32,7 +32,7 @@ default + Live toggle).
   2. **Local Copilot review loop** (BEFORE any push) — run the local Copilot CLI against the *complete* branch diff vs `origin/main`, fix everything it flags, re-run, loop until clean. See the exact command below.
   3. Push the branch; open PR toward the working branch.
   4. **GitHub Copilot** requested as reviewer and its review confirmed started.
-  5. **GitHub CI + Copilot loop** — wait for both CI green **and** Copilot comments; fix broken tests + comments, push, re-request Copilot review, loop until all green.
+  5. **GitHub CI + Copilot loop (bounded)** — wait for CI green **and** Copilot comments; fix broken tests + comments, push, re-request review, loop. **Bounded wait**: GitHub Copilot review is currently NOT serviced on this repo (see `docs/LESSON.md`); if it doesn't materialize within ~3–5 min, the local Copilot `/review` + green local tests are the binding gate — record it in `docs/PROGRESS.md` and proceed.
   6. All green → merge. Record findings in `docs/LESSON.md`; update `docs/PROGRESS.md`. Only then move to the next task.
 - Pure-code tasks: PHPUnit/Vitest suffice. UI/UX tasks: Playwright is required too.
 

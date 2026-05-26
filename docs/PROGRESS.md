@@ -20,4 +20,8 @@ Live "where am I" log. Newest first. Resume from the top after any interruption.
 - Then **M1 — Laravel foundation**: scaffold Laravel 13 app, SQLite, `laravel/ai`, Blade+Vite shell, e-commerce schema + seeders, tabular schema. (See plan §3 M1.)
 
 ### Blockers
-- None recorded yet. (Record exact blockers here if a gate is sandbox/network-blocked.)
+- **GitHub Copilot PR review not serviced on this repo.** PR #1: REST request accepted (`Copilot`) but `reviewRequests` clears instantly, no review posted after 12+ min. Feature not enabled/entitled for `lopadova/spreadsheet-ai`. Policy adopted: bounded wait (~3–5 min) on GitHub Copilot, then rely on local Copilot `/review` + green local tests as the binding gate. Owner can enable "Copilot code review" in repo settings to make the GitHub gate real. (See `docs/LESSON.md`.)
+- License mismatch: repo is Apache-2.0, README/article say MIT → resolve in M7.
+
+### M0 outcome (2026-05-26)
+- PR #1 `task/m0-governance` → `main`: local Copilot `/review` passed (13 fixes), local gates N/A (docs only), GitHub Copilot review unavailable → merged under the bounded-wait policy.

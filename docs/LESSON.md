@@ -43,6 +43,11 @@ See `docs/plan.md §1.A` for the full annotated list (findings 1–9 with task a
 - ❌ There is no `requestReviewsByLogin` GraphQL mutation (the reference repo's note was inaccurate). Use the REST endpoint above.
 - Verify with `gh pr view <PR> --json reviewRequests`.
 
+### GitHub Copilot PR review is NOT serviced on this repo (blocker → policy)
+- On PR #1 the REST request returns `Copilot` (accepted) but `reviewRequests` empties **immediately** and **no review is ever posted** (waited 12+ min). The bot is added then instantly dropped → GitHub "Copilot code review" is not enabled / not entitled for `lopadova/spreadsheet-ai`.
+- **Adopted policy (bounded wait):** still fire the REST request on every PR (cheap), but wait at most ~3–5 min. If no Copilot review materializes, treat the **local Copilot `/review` + green local tests** as the binding review gate, record it in PROGRESS, and proceed. Do NOT deadlock the roadmap on an unavailable external feature.
+- To enable later: the repo owner can turn on Copilot code review in repo/org settings (needs a Copilot subscription that includes automated PR review). Once enabled, the GitHub-side gate becomes real again.
+
 ### Repo license mismatch (TODO M7)
 - The GitHub repo was initialized with **Apache-2.0** (`LICENSE`), but the article/README badges say **MIT**. Decide in M7: align README badges to Apache-2.0, or relicense to MIT. Don't claim MIT in the README until resolved.
 
