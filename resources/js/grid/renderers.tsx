@@ -172,9 +172,11 @@ function drawPercentage(d: DrawCtx, value: unknown): void {
         ctx.fillStyle = 'rgba(127,127,135,0.25)';
         roundRect(ctx, barX, barY, barW, barH, 2.5);
         ctx.fill();
-        ctx.fillStyle = barColor;
-        roundRect(ctx, barX, barY, (barW * pct) / 100, barH, 2.5);
-        ctx.fill();
+        if (pct > 0) {
+            ctx.fillStyle = barColor;
+            roundRect(ctx, barX, barY, (barW * pct) / 100, barH, 2.5);
+            ctx.fill();
+        }
     }
     ctx.font = `13px ${MONO}`;
     ctx.fillStyle = d.textColor;
@@ -353,7 +355,7 @@ function drawRelation(d: DrawCtx, value: unknown): void {
 }
 
 function drawJsonPath(d: DrawCtx, value: unknown): void {
-    const { ctx, theme, rect } = d;
+    const { ctx, rect } = d;
     // `$` sigil first.
     ctx.font = `13px ${MONO}`;
     ctx.fillStyle = '#8b5cf6';
@@ -377,7 +379,6 @@ function drawJsonPath(d: DrawCtx, value: unknown): void {
         default:
             drawText(inner, value);
     }
-    void theme;
 }
 
 // ---------- Chrome: flag tint, confidence tint, dot, citation badge ----------

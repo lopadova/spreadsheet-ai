@@ -3,7 +3,20 @@
 Non-obvious facts, fixes, and gotchas. Append dated entries (`YYYY-MM-DD`),
 most recent first. Every new session and sub-agent should read this.
 
-## 2026-05-26 — M3 local Copilot review findings (applied)
+## 2026-05-26 — M4 local Copilot review findings (applied)
+- **`drawPercentage` — zero-width fill bar path**: when `pct = 0` (null value or explicit 0), `roundRect` was called with `w = 0` → degenerate path drawn to canvas (harmless but invalid). Fixed: guard `if (pct > 0)` before drawing the fill bar.
+- **`drawJsonPath` — unused `theme` destructuring + `void theme` suppression**: `theme` was extracted from `d` but never used directly (it flows through `{ ...d }` to sub-renderers). Removed the destructure; `void theme` suppression no longer needed.
+- **Citation registry clear: `useEffect` (async) vs. render-time (sync)**: using `useEffect` to clear the `CitationRegistry` on preset change means the registry is cleared AFTER the first render with the new preset, potentially assigning citation indices starting from the old `next` counter rather than 1. Fixed: replaced `useEffect` with a render-phase previous-value comparison (`prevPresetRef`) so the registry is cleared synchronously before `getCellContent` is called for the new preset. Removed the now-unused `useEffect` import from `AgenticGrid.tsx`.
+- **Unused `export { cellKey }` in `useSseGeneration.ts`**: `cellKey` was re-exported from `useSseGeneration` (which imported it from `store/cells`) but had no consumers. Removed. Also removed the now-unused `cellKey` import.
+- **Unused deps `lodash`, `react-responsive-carousel`, `@types/lodash` in `package.json`**: none are imported anywhere in the M4 codebase. Removed. `marked` left (likely for M5 citation panel markdown rendering).
+- **EventSource lifecycle — confirmed correct**: `closeStream` is called on stop, unmount, and preset/review change (via the `[reviewId]` effect). The run-token guard drops any in-flight events with a stale token. No leak possible.
+- **`globalAlpha` in `drawRating` — confirmed correct**: `ctx.globalAlpha = 1` is restored after the star loop; outer `ctx.save()/restore()` also covers it.
+- **`roundRect` with `w = 0` produces `rr = 0`** (all arcTo calls degenerate to straight lines) — the path itself doesn't crash but fill draws nothing visible. The `pct > 0` guard above fixes the one case that matters.
+- **Risky — not applied**:
+  - The chunk-size warning (`app.js > 500 kB`) is pre-existing; Glide Data Grid is large. Consider lazy-loading the grid or code-splitting in M7.
+  - `marked` in `package.json` is a forward-declare for M5 citation panel; verify and remove if not used by end of M5.
+
+
 - **`ToastContext.Provider value={{ push }}`** created a new object every render, causing every `useToast()` consumer to re-render on any toast state change. Fixed: extracted `api = useMemo(() => ({ push }), [push])` and passed that as the context value.
 - **`setTimeout` IDs in `ToastProvider` not tracked** — unmounting before timer fire would leak a stale `setToasts` call. Fixed: `timers = useRef<Map<string, timeout>>` stores each timer ID; a cleanup `useEffect` calls `clearTimeout` on all pending timers on unmount. The timer map entry is deleted when the timeout fires naturally.
 - **`onPickSuggestion` in `TabularPage` not memoized** — inline arrow function recreated every render; now `useCallback([toast])` wraps it. With `toast` stable (after context fix above), the prop passed to `ActionBar` is now stable across renders.

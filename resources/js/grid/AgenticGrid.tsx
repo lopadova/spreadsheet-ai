@@ -11,7 +11,7 @@
 // keyed by data-testid, updated from the cell store. Tests assert against it.
 // ============================================================
 
-import { useCallback, useEffect, useMemo, useRef } from 'react';
+import { useCallback, useMemo, useRef } from 'react';
 import {
     DataEditor,
     GridCellKind,
@@ -66,10 +66,16 @@ export function AgenticGrid({
     const baseCount = baseColumns.length;
 
     // Stable citation numbering across re-renders/repaints (§1.A.2).
+    // Clear synchronously during render when preset changes (not via useEffect)
+    // so the first getCellContent call for the new preset always sees a clean
+    // registry and citation indices restart from 1. (A useEffect-based clear
+    // runs AFTER the first render, potentially assigning stale indices.)
     const citationsRef = useRef(new CitationRegistry());
-    useEffect(() => {
+    const prevPresetRef = useRef(preset);
+    if (prevPresetRef.current !== preset) {
+        prevPresetRef.current = preset;
         citationsRef.current.clear();
-    }, [preset]);
+    }
 
     const theme = useMemo(() => buildGlideTheme(), [themeVersion]);
 

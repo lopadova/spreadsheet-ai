@@ -13,7 +13,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { DataEditorRef } from '@glideapps/glide-data-grid';
 import { streamUrl, type AiColumn, type Cell, type Row } from '../api/client';
-import { cellKey, type SubscribableCellStore } from '../store/cells';
+import { type SubscribableCellStore } from '../store/cells';
 import { applyCellEvent, type SseCellEvent } from './sseReducer';
 
 export interface RunProgress {
@@ -182,5 +182,3 @@ function columnGridOffset(columns: AiColumn[], columnIndex: number): number {
     const pos = columns.findIndex((c) => c.index === columnIndex);
     return pos >= 0 ? pos : columnIndex;
 }
-
-export { cellKey };
