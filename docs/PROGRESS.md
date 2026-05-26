@@ -60,7 +60,7 @@ Live "where am I" log. Newest first. Resume from the top after any interruption.
 - **M7 — tag `v0.1.0` + GitHub release** (in progress): WOW README merged; RULES.md distilled. Remaining: cut the tag, publish the GitHub release, fold LESSON back into AGENTS.md/CLAUDE.md/skills.
 
 ### Blockers
-- **GitHub Copilot PR review not serviced on this repo.** PR #1: REST request accepted (`Copilot`) but `reviewRequests` clears instantly, no review posted after 12+ min. Feature not enabled/entitled for `lopadova/spreadsheet-ai`. Policy adopted: bounded wait (~3–5 min) on GitHub Copilot, then rely on local Copilot `/review` + green local tests as the binding gate. Owner can enable "Copilot code review" in repo settings to make the GitHub gate real. (See `docs/LESSON.md`.)
+- **GitHub Copilot PR review — RESOLVED understanding**: initially looked "not serviced" (PR #1: request cleared instantly), but from PR #3 onward it posts real inline reviews — just **slow/intermittent** (minutes). The bounded-wait "merge anyway" policy was **REVOKED**; binding gate is now CI green + Copilot reviewed with zero unresolved comments (see `docs/LESSON.md` + `docs/RULES.md`). Validated across M5–M7.
 - ~~License mismatch: repo is Apache-2.0, README/article say MIT → resolve in M7.~~ **RESOLVED (M7):** README badges + License section now state Apache-2.0 accurately.
 
 ### M0 outcome (2026-05-26)

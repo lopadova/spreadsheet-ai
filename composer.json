@@ -1,10 +1,10 @@
 {
     "$schema": "https://getcomposer.org/schema.json",
-    "name": "laravel/laravel",
+    "name": "lopadova/spreadsheet-ai",
     "type": "project",
-    "description": "The skeleton application for the Laravel framework.",
-    "keywords": ["laravel", "framework"],
-    "license": "MIT",
+    "description": "Spreadsheet-AI — the agentic grid: rows are entities, columns are LLM prompts, cells are AI answers (Tabular Review 2.0 demo).",
+    "keywords": ["laravel", "ai", "tabular-review", "agentic-grid", "react", "glide-data-grid"],
+    "license": "Apache-2.0",
     "require": {
         "php": "^8.3",
         "laravel/ai": ">=0.6,<0.6.8",

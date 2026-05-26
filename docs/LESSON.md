@@ -146,7 +146,7 @@ See `docs/plan.md §1.A` for the full annotated list (findings 1–9 with task a
 - CI (`.github/workflows/ci.yml`) was added at M5 (brought forward from M7). PRs #2–#5 (M1–M4) merged with only LOCAL gates + local Copilot review, without waiting for GitHub Copilot. `main` is locally green; CI validates it from M5 on. Strict CI+Copilot gate applies from M5 onward.
 
 ### Repo license mismatch (TODO M7)
-- RESOLVED (M7): kept the repo's **Apache-2.0** `LICENSE`; the WOW README badges + License section state Apache-2.0 accurately and credit MikeOSS as AGPL-3.0. (Relicensing to MIT is the owner's call; not done unilaterally.)
+- RESOLVED (M7): standardized on **Apache-2.0** across `LICENSE`, README badges/section, AND `composer.json` `"license"` (was the skeleton's `MIT` — a real mismatch Copilot caught). MikeOSS credited as AGPL-3.0. (Relicensing to MIT remains the owner's call.)
 
 ### Review workflow — two-phase Copilot (rationale)
 Phase 1 = local Copilot review before push; Phase 2 = GitHub Copilot PR review after push.

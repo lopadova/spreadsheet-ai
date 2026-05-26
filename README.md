@@ -67,7 +67,7 @@ is that idea, **generalized beyond legal** and built on a stack anyone can adopt
 ## What makes it special
 
 - **🧩 Each column is a prompt.** Click a column to edit its label / format / natural‑language prompt, then regenerate just that column.
-- **🎨 17 column formats** (vs Mike's 9) — text, list, number, %, money, currency, yes/no, date, tag, **enum**, **enum_status**, **rating**, **url**, **person**, **tags_multi**, **relation**, and **`json_path`**.
+- **🎨 17 column formats** (vs Mike's 9) — `text`, `bulleted_list`, `number`, `percentage`, `monetary_amount`, `currency`, `yes_no`, `date`, `tag`, **`enum`**, **`enum_status`**, **`rating`**, **`url`**, **`person`**, **`tags_multi`**, **`relation`**, and **`json_path`**.
 - **⚡ `json_path` = zero‑LLM bypass.** When the value is already in the row's structured data, it's resolved directly — **free, instant**, no model call.
 - **💸 Cost is `O(rows)`, not `O(rows × cols)`.** One batched call per row returns one JSON line per column.
 - **📺 Live cell‑by‑cell streaming** over Server‑Sent Events: watch the grid fill in, skeleton → value, with a progress bar.
@@ -130,6 +130,7 @@ npm install
 # 3. Create your env + app key + the SQLite database file
 cp .env.example .env          # Windows: copy .env.example .env
 php artisan key:generate
+touch database/database.sqlite   # Windows: ni database/database.sqlite
 #   (the DB defaults to SQLite at database/database.sqlite)
 
 # 4. Create the schema and load the demo data (returns, orders, articles, campaigns)
