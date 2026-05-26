@@ -15,6 +15,10 @@ class BuiltinWorkflowSeeder extends Seeder
 {
     public function run(): void
     {
+        if (! app()->environment(['local', 'testing'])) {
+            return;
+        }
+
         foreach (PresetData::presets() as $key => $preset) {
             Workflow::query()->updateOrCreate(
                 ['tenant_id' => 'demo', 'preset_key' => $key],

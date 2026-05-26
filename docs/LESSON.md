@@ -3,6 +3,13 @@
 Non-obvious facts, fixes, and gotchas. Append dated entries (`YYYY-MM-DD`),
 most recent first. Every new session and sub-agent should read this.
 
+## 2026-05-26 — M1 local review findings (applied)
+- **`QUEUE_CONNECTION` must be `sync` in `.env.example`** — Framework default is `database`, but RULES require `sync`. With `database` queue and no worker, queued jobs would silently never run. Fixed in `.env.example`.
+- **`BuiltinWorkflowSeeder` must be gated to `local`/`testing`** — RULES say "demo seeders gate to local/testing environments." The builtin seeder was missing the env check. Fixed — identical gate to `EcommerceDemoSeeder`.
+- **`TABULAR_SSE_PACING_MS` was absent from `.env.example`** — Listed as `env()` key in `config/tabular.php` but not documented in `.env.example`. Added.
+- **No DB UNIQUE constraint on `workflows(tenant_id, preset_key)`** — The `updateOrCreate` in `BuiltinWorkflowSeeder` is application-level idempotency only. Sufficient for sync-queue demo; adding a DB constraint would require `WorkflowFactory` changes to avoid `(demo, returns)` duplicate violations in tests. Left for M2 if concurrency is introduced.
+- **`parseDayMonth()` silent unknown-month fallback** — Returns '05' (May) for any unrecognized abbreviation. Safe for fixed demo data; would silently misbehave on dynamic data. Acceptable for M1.
+
 ## 2026-05-26 — M1 backend foundation (schema, models, seeders, config)
 - `laravel/ai v0.6.7` has a built-in `anthropic` provider (config `vendor/laravel/ai/config/ai.php`); no custom provider needed. `config/ai.php` copied with `default => 'anthropic'`. Demo config in `config/tabular.php` (mock/provider/model/sse_pacing_ms/max_tokens/temperature).
 - SQL reserved word: the returns table is named `returns_rows` (model `ReturnRow`) to avoid `returns`.
