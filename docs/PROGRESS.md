@@ -53,7 +53,7 @@ Live "where am I" log. Newest first. Resume from the top after any interruption.
 ### M7 — release (in progress)
 - CI already live (added M5). WOW community README written (badges, banner, screenshots, MikeOSS credit, junior quickstart). LESSON distilled into `docs/RULES.md` hard-won rules. License resolved: kept Apache-2.0, README accurate. Next: tag `v0.1.0` + GitHub release.
 
-### BUILD STATUS: M0–M6 all merged to `main`; M7 finalizing.
+### BUILD STATUS: M0–M7 ALL MERGED to `main`. Released v0.1.0. Closing to v1.0.0 (security bump + final verification).
 
 ### Next
 
