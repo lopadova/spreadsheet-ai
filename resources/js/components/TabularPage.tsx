@@ -154,15 +154,19 @@ export function TabularPage() {
     const handleEditorDelete = useCallback(
         (index: number) => {
             deleteColumn.mutate(index, {
-                onSuccess: () => toast.push({ title: 'Colonna eliminata', body: `col ${index}` }),
+                onSuccess: () => {
+                    toast.push({ title: 'Colonna eliminata', body: `col ${index}` });
+                    setEditorOpen(false);
+                    // Backend destroy() reindexes columns after the deleted one, so a
+                    // panel at-or-after that index is now invalid — close it. Column
+                    // positions also shift, so drop the (now-stale) grid selection.
+                    setCellSel((s) => (s != null && s.columnIndex >= index ? null : s));
+                    setGridSelection(EMPTY_SELECTION);
+                },
+                // Keep the editor open + inform the user if the delete fails.
+                onError: () =>
+                    toast.push({ title: 'Eliminazione fallita', body: `Impossibile eliminare la colonna ${index}.` }),
             });
-            setEditorOpen(false);
-            // Backend destroy() reindexes all columns after the deleted one, so any
-            // panel at-or-after the deleted index now points at the wrong/invalid
-            // column — close it. Column positions also shift, so drop the grid
-            // selection (its indexes would be stale/out-of-range).
-            setCellSel((s) => (s != null && s.columnIndex >= index ? null : s));
-            setGridSelection(EMPTY_SELECTION);
         },
         [deleteColumn, toast],
     );
