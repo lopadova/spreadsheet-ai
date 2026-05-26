@@ -12,6 +12,10 @@ class ExampleTest extends TestCase
      */
     public function test_the_application_returns_a_successful_response(): void
     {
+        // The `/` view uses @vite(); stub the manifest so the test does not
+        // depend on a prior `npm run build` (CI runs phpunit before build).
+        $this->withoutVite();
+
         $response = $this->get('/');
 
         $response->assertStatus(200);
