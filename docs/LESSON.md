@@ -31,6 +31,12 @@ See `docs/plan.md §1.A` for the full annotated list (findings 1–9 with task a
 - Vite/Vitest on Windows: `spawn EPERM` issues fixed by recent Vite/Vitest; use `pool: 'threads'` (forks still spawned child processes).
 - CI must make demo data deterministic (fake providers / mock LLM) — our Mock mode is the determinism lever for Playwright.
 
+### Local Copilot CLI behavior (`copilot --autopilot --yolo`)
+- It is **agentic**: it not only reviews but **edits files and even runs `git add -A` + `git commit` itself** to apply fixes. Expect a self-authored commit after the run.
+- **GOTCHA**: its `git add -A` swept the temporary `.review-diff.patch` into a commit. → Always `.gitignore` the diff artifact BEFORE running it (now ignored via `.gitignore`), or write the diff outside the repo.
+- Argument list limit: passing the full diff inline (`$(git diff …)`) overflows the OS arg limit on large diffs → write the diff to a gitignored file and tell Copilot to read it.
+- It consumes premium requests/tokens; one M0 docs review = ~2 premium requests, ~9 min.
+
 ### Review workflow — two-phase Copilot (rationale)
 Phase 1 = local Copilot review before push; Phase 2 = GitHub Copilot PR review after push.
 Full workflow (commands + fallbacks): see `AGENTS.md §Branch & PR loop` and `docs/RULES.md §Review rules`.
