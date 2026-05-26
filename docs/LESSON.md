@@ -3,7 +3,15 @@
 Non-obvious facts, fixes, and gotchas. Append dated entries (`YYYY-MM-DD`),
 most recent first. Every new session and sub-agent should read this.
 
-## 2026-05-26 — M2 local Copilot review findings (applied)
+## 2026-05-26 — M3 local Copilot review findings (applied)
+- **`ToastContext.Provider value={{ push }}`** created a new object every render, causing every `useToast()` consumer to re-render on any toast state change. Fixed: extracted `api = useMemo(() => ({ push }), [push])` and passed that as the context value.
+- **`setTimeout` IDs in `ToastProvider` not tracked** — unmounting before timer fire would leak a stale `setToasts` call. Fixed: `timers = useRef<Map<string, timeout>>` stores each timer ID; a cleanup `useEffect` calls `clearTimeout` on all pending timers on unmount. The timer map entry is deleted when the timeout fires naturally.
+- **`onPickSuggestion` in `TabularPage` not memoized** — inline arrow function recreated every render; now `useCallback([toast])` wraps it. With `toast` stable (after context fix above), the prop passed to `ActionBar` is now stable across renders.
+- **Risky — not auto-applied:**
+  - `useUpdateColumn`/`useDeleteColumn` `onError` cast `context as { previous?: ReviewResponse }` — TanStack Query v5 infers context from `onMutate` return, but the explicit `UseMutationResult<…>` return type annotation omits the 4th (context) generic, forcing the cast. Typing it fully is a larger refactor; defer to M4/M5 when these mutations are wired up.
+  - `TopChrome` nav links use `href="#"` with `preventDefault` — screen readers announce these as links. Replace with `<button>` elements in M5 when real routes exist.
+
+
 - **`JsonPathResolver::stringifyValue` dead branch** — `$encoded === false` after `JSON_THROW_ON_ERROR` is unreachable; removed.
 - **`persistCell` fallback `json_encode` missing flag** — The degraded encode used `JSON_UNESCAPED_UNICODE` only; added `JSON_THROW_ON_ERROR` for consistency (content is hardcoded-safe primitives, won't throw).
 - **`ColumnRequest` `enum_values` allows empty array** — The `requiredIf` only ensured the field was present, not non-empty. Added `'min:1'` rule. Docblock updated.

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { TopChrome, type Theme } from './TopChrome';
 import { HeroBanner } from './HeroBanner';
 import { PresetChips } from './PresetChips';
@@ -40,10 +40,13 @@ export function TabularPage() {
         [data],
     );
 
-    const onPickSuggestion = (s: Suggestion) => {
-        // Full picker + generation is M5; here we surface the choice.
-        toast.push({ title: 'AI Suggest', body: `Colonna "${s.name}" pronta (M5)` });
-    };
+    const onPickSuggestion = useCallback(
+        (s: Suggestion) => {
+            // Full picker + generation is M5; here we surface the choice.
+            toast.push({ title: 'AI Suggest', body: `Colonna "${s.name}" pronta (M5)` });
+        },
+        [toast],
+    );
 
     return (
         <div className="page-root">
