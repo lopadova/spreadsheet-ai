@@ -116,7 +116,7 @@ Browser (React 19)                         Laravel 13
 
 ## Quickstart (junior‑proof, step by step)
 
-> Prereqs: **PHP 8.3+**, **Composer**, **Node 20+** & **npm**. (On Windows, [Laravel Herd](https://herd.laravel.com/) gives you PHP + Composer in one click.)
+> Prereqs: **PHP 8.3+**, **Composer**, **Node 22+** & **npm**. (On Windows, [Laravel Herd](https://herd.laravel.com/) gives you PHP + Composer in one click.)
 
 ```bash
 # 1. Clone
