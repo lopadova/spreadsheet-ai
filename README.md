@@ -88,7 +88,7 @@ is that idea, **generalized beyond legal** and built on a stack anyone can adopt
 `currency` · `yes_no` · `date` · `tag` · `enum` · `enum_status` · `rating` ·
 `url` · `person` · `tags_multi` · `relation` · `json_path` *(LLM‑free)*.
 
-The **🌈 Tutti i 16 formati** preset renders every one of them at once.
+The **🌈 Tutti i 16 formati** preset renders 16 of them at once (all except `json_path`, which resolves from a path instead of a prompt).
 
 ## Architecture
 
@@ -96,7 +96,7 @@ Three deliberate decisions keep this a clonable, zero‑setup demo:
 
 1. **SQLite** (`database/database.sqlite`) — rows are seeded e‑commerce entities; no embeddings/pgvector needed (the LLM context is the row itself).
 2. **Synchronous SSE** — the stream endpoint iterates rows, calls the extractor, and echoes `cell` events as they land. No Redis/Horizon.
-3. **Mock mode by default + a Live toggle** — works offline; flip to real `laravel/ai` (Anthropic `claude-haiku-4.5`) when you add a key.
+3. **Mock mode by default + a Live toggle** — works offline; flip to real `laravel/ai` (Anthropic `claude-haiku-4-5`) when you add a key.
 
 **Stack:** Laravel 13 · PHP 8.3+ · `laravel/ai` · SQLite — and React 19 · Vite 8 ·
 Tailwind v4 · `@glideapps/glide-data-grid` · TanStack Query.
