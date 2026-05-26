@@ -88,11 +88,11 @@ test.describe('CSV export (M6.3)', () => {
         const path = await download.path();
         const fs = await import('node:fs/promises');
         const csv = await fs.readFile(path, 'utf8');
-        const lines = csv.replace(/^﻿/, '').split('\r\n');
+        const lines = csv.replace(/^\uFEFF/, '').split('\r\n');
         for (const line of lines) {
             // A neutralised formula field is either prefixed with ' or wrapped in
-            // quotes; a raw leading =,+,@ on a field is the failure we guard.
-            expect(/^[=@]/.test(line)).toBe(false);
+            // quotes; a raw leading =,+,-,@ on a field is the failure we guard.
+            expect(/^[=+\-@]/.test(line)).toBe(false);
         }
         // Header row present.
         expect(lines[0]).toMatch(/Reso|Cliente|Motivo|ID/i);

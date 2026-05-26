@@ -62,6 +62,8 @@ export function downloadCsv(filename: string, csv: string): boolean {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    URL.revokeObjectURL(url);
+    // Defer revocation so the browser can capture the blob reference before
+    // the URL is invalidated (synchronous revoke can race the download start).
+    setTimeout(() => URL.revokeObjectURL(url), 0);
     return true;
 }
