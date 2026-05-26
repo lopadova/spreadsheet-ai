@@ -56,7 +56,7 @@ test.describe('Glide grid streaming (M4)', () => {
 
     test('17-format showcase: every AI column renders a value after Run all', async ({ page }) => {
         await page.goto('/');
-        await page.getByRole('tab', { name: /Tutti i 17 formati/i }).click();
+        await page.getByRole('tab', { name: /Tutti i 16 formati/i }).click();
         await expect(page.locator(MIRROR)).toBeAttached();
 
         await page.getByRole('button', { name: /Run all/i }).click();

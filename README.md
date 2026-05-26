@@ -88,7 +88,7 @@ is that idea, **generalized beyond legal** and built on a stack anyone can adopt
 `currency` · `yes_no` · `date` · `tag` · `enum` · `enum_status` · `rating` ·
 `url` · `person` · `tags_multi` · `relation` · `json_path` *(LLM‑free)*.
 
-The **🌈 Tutti i 17 formati** preset renders every one of them at once.
+The **🌈 Tutti i 16 formati** preset renders every one of them at once.
 
 ## Architecture
 
@@ -147,7 +147,7 @@ php artisan serve
 
 Then, in the browser:
 
-1. Pick a scenario **chip** at the top (🛒 Triage Resi, 🚨 Frode Ordini, 📦 Audit Schede, 💌 Audit Campagne, 🌈 Tutti i 17 formati).
+1. Pick a scenario **chip** at the top (🛒 Triage Resi, 🚨 Frode Ordini, 📦 Audit Schede, 💌 Audit Campagne, 🌈 Tutti i 16 formati).
 2. Click **Run all** — watch the cells stream in, skeleton → value, with confidence dots and citations.
 3. Click an AI **column header** (✎) to edit its prompt/format, then **Save & regenerate** that column.
 4. Click **✨ AI Suggest** to add a tailored column, or **Add column** to write your own.

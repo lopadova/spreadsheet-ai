@@ -18,7 +18,7 @@ export const PRESETS: PresetMeta[] = [
     { id: 'fraud', emoji: '🚨', label: 'Frode Ordini', sub: 'Risk · 48h', entity: 'Ordine', entityPlural: 'Ordini' },
     { id: 'articles', emoji: '📦', label: 'Audit Schede', sub: 'Catalogo · SS26', entity: 'Articolo', entityPlural: 'Articoli' },
     { id: 'email', emoji: '💌', label: 'Audit Campagne', sub: 'Email marketing', entity: 'Campagna', entityPlural: 'Campagne' },
-    { id: 'formats', emoji: '🌈', label: 'Tutti i 17 formati', sub: 'Showcase renderer', entity: 'Esempio', entityPlural: 'Esempi' },
+    { id: 'formats', emoji: '🌈', label: 'Tutti i 16 formati', sub: 'Showcase renderer', entity: 'Esempio', entityPlural: 'Esempi' },
 ];
 
 export const DEFAULT_PRESET = PRESETS[0].id;
