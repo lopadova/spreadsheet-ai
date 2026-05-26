@@ -13,15 +13,26 @@
         "typecheck": "tsc --noEmit"
     },
     "dependencies": {
+        "@glideapps/glide-data-grid": "^6.0.3",
         "@tanstack/react-query": "^5.100.14",
+        "lodash": "^4.17.21",
+        "marked": "^4.3.0",
         "react": "^19.0.0",
-        "react-dom": "^19.0.0"
+        "react-dom": "^19.0.0",
+        "react-responsive-carousel": "^3.2.23"
+    },
+    "overrides": {
+        "@glideapps/glide-data-grid": {
+            "react": "$react",
+            "react-dom": "$react-dom"
+        }
     },
     "devDependencies": {
         "@playwright/test": "^1.50.0",
         "@tailwindcss/vite": "^4.0.0",
         "@testing-library/jest-dom": "^6.6.0",
         "@testing-library/react": "^16.2.0",
+        "@types/lodash": "^4.17.0",
         "@types/node": "^25.9.1",
         "@types/react": "^19.0.0",
         "@types/react-dom": "^19.0.0",
