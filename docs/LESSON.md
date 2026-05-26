@@ -3,6 +3,9 @@
 Non-obvious facts, fixes, and gotchas. Append dated entries (`YYYY-MM-DD`),
 most recent first. Every new session and sub-agent should read this.
 
+## 2026-05-26 — CI-only horizontal overflow (Glide grid flex item)
+- The overflow e2e passed locally (Windows) + on earlier CI runs but failed on Linux CI with `.page-content` overflowing ~589px. Cause: `.agentic-grid-wrap` is a flex item with the default `min-width:auto` (= content width), so the Glide canvas grew to its intrinsic total-column width and widened the page (CI's headless chromium sized it before/differently than local). Fix: `min-width:0` (+ `overflow:hidden`) on the grid flex wrap → Glide sizes its canvas to the container and scrolls columns internally. Textbook flex-item content-overflow fix. Also: do NOT add `overflow-x:hidden` as a fallback to `overflow-x:clip` on a container measured for overflow — `hidden` forces `overflow-y:auto`, adding a vertical scrollbar that shrinks clientWidth and falsely trips the check.
+
 ## 2026-05-26 — M6 polish / a11y / CSV export
 - **Decorative absolutely-positioned glow caused page horizontal overflow**: `.hero-glow-2` (`right:-120px`, width 360px) widened `.page-content`'s `scrollWidth` ~114px even though `.hero` had `overflow:hidden` — because `.hero-bg` (inset:0) did NOT clip. Fix: `overflow:hidden` on the glow's own wrapper + `right:0`. `getBoundingClientRect` ignores clipping, but a non-clipping ancestor's `scrollWidth` still counts off-edge boxes.
 - **Zoom/overflow e2e assertion**: measure `el.scrollWidth - el.clientWidth <= 2` on `.page-content` at 1280×800, 1024×768, and 853×533 (≈150% zoom). `overflow-x: clip` does NOT create a scroll container, so the check stays honest; the real fix is `flex-wrap` + `min-width:0` on inner clusters.

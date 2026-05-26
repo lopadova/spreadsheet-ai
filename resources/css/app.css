@@ -867,6 +867,13 @@ button {
 /* ============== Glide grid (M4) ============== */
 .agentic-grid-wrap {
     flex: 1;
+    /* min-width:0 lets this flex item shrink to the container instead of growing
+       to the grid's intrinsic column width (a flex item defaults to
+       min-width:auto = content width), which otherwise widened .page-content by
+       hundreds of px on CI. Glide sizes its canvas to this box and scrolls
+       columns internally; overflow:hidden contains any sub-pixel spill. */
+    min-width: 0;
+    overflow: hidden;
     min-height: 280px;
     background: var(--bg-elevated);
     border-bottom: 1px solid var(--border);
