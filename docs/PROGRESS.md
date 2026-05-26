@@ -15,9 +15,13 @@ Live "where am I" log. Newest first. Resume from the top after any interruption.
 ### Repo state
 - Only `LICENSE`, `README.md` (stub), plus the new `docs/`, `AGENTS.md`, `CLAUDE.md`, `.claude/` governance files. No Laravel app / frontend yet.
 
+### M1 outcome (2026-05-26) — MERGED (PR #2)
+- Laravel 13.8 + `laravel/ai 0.6.7` (anthropic provider). 9 migrations (ecommerce + tabular), models/factories, `PresetData` (ported from data.jsx), seeders, `config/ai.php`+`config/tabular.php`. React 19 + Vite 8 + Tailwind v4 shell, design tokens, Vitest+Playwright tooling, `scripts/run-php.mjs`.
+- Gates green: composer validate, migrate+seed, **phpunit 25/198**, typecheck, vitest, build, e2e. Built by 2 parallel sub-agents (disjoint scopes), integrated + local-Copilot-reviewed by integrator.
+- GitHub Copilot review again not serviced → merged under bounded-wait policy.
+
 ### Next
-- **M0**: push `task/m0-governance` branch → run local Copilot review loop (DoD step 2, see `AGENTS.md`) → open PR → request GitHub Copilot review → merge when CI + Copilot green.
-- Then **M1 — Laravel foundation**: scaffold Laravel 13 app, SQLite, `laravel/ai`, Blade+Vite shell, e-commerce schema + seeders, tabular schema. (See plan §3 M1.)
+- **M2 — Backend Tabular engine** (in progress): FormatType/CellFlag/CellStatus enums, RowContextBuilder, JsonPathResolver, TabularReviewExtractor (batched laravel/ai + Mock from PresetData), FlagClassifier, REST API + FormRequests, synchronous SSE stream. PHPUnit guardrails. (Pure backend → no Playwright.)
 
 ### Blockers
 - **GitHub Copilot PR review not serviced on this repo.** PR #1: REST request accepted (`Copilot`) but `reviewRequests` clears instantly, no review posted after 12+ min. Feature not enabled/entitled for `lopadova/spreadsheet-ai`. Policy adopted: bounded wait (~3–5 min) on GitHub Copilot, then rely on local Copilot `/review` + green local tests as the binding gate. Owner can enable "Copilot code review" in repo settings to make the GitHub gate real. (See `docs/LESSON.md`.)
