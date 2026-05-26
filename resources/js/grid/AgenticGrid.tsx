@@ -28,7 +28,7 @@ import { aiColumnIdByIndex, aiColumnWidth, baseColumnWidth } from './columnWidth
 import { agenticCellRenderer, cellSummaryText, type AgenticCellData } from './renderers';
 import { CitationRegistry } from './citations';
 import { buildGlideTheme } from './theme';
-import { normaliseFlag, truncate, valueToText } from './format';
+import { cellDisplayText, normaliseFlag, truncate } from './format';
 
 const FORMAT_ICON: Record<string, string> = {
     text: 'Aa', bulleted_list: '•', number: '#', percentage: '%', monetary_amount: '€',
@@ -259,15 +259,7 @@ interface GridMirrorProps {
 }
 
 function mirrorCellText(cell: Cell | undefined, col: AiColumn): string {
-    if (cell == null) return '';
-    if (cell.status === 'generating' || cell.status === 'pending') return '';
-    const value = cell.content?.summary ?? null;
-    if (value == null) return '—';
-    if (col.format === 'rating') {
-        const n = typeof value === 'number' ? value : Number.parseInt(String(value), 10);
-        return Number.isFinite(n) ? `${Math.max(0, Math.min(5, n))}/5` : '—';
-    }
-    return valueToText(value);
+    return cellDisplayText(cell, col.format);
 }
 
 function GridMirror({

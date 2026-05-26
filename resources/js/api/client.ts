@@ -34,7 +34,10 @@ export interface Row {
 }
 
 export interface CellContent {
-    summary: string | null;
+    // Backend extraction can persist non-string JSON for `summary` (e.g. a
+    // json_path number, or arrays/objects for tags/person/relation), so this is
+    // `unknown`; render it via `valueToText`/`cellDisplayText`, never as a bare string.
+    summary: unknown;
     flag: string | null;
     reasoning: string | null;
     citations: unknown;

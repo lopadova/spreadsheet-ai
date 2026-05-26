@@ -14,7 +14,7 @@ test.describe('Tabular Review page shell (M3)', () => {
         await expect(page.getByRole('button', { name: /AI Suggest/i })).toBeVisible();
         await expect(page.getByRole('button', { name: /Add column/i })).toBeVisible();
         await expect(page.getByRole('button', { name: /Run all/i })).toBeVisible();
-        await expect(page.getByRole('button', { name: /Export XLSX/i })).toBeVisible();
+        await expect(page.getByRole('button', { name: /Export CSV/i })).toBeVisible();
         await expect(page.getByRole('button', { name: /Share/i })).toBeVisible();
 
         // Theme toggle flips the documentElement data-theme attribute.
