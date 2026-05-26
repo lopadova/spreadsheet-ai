@@ -347,6 +347,12 @@ button {
        citations) manage their own overflow-x. */
     width: 100%;
     max-width: 100%;
+    /* `clip` (Chrome 90+/FF 81+/Safari 16+) avoids creating a scroll container,
+       so it can't add a vertical scrollbar (which would shrink clientWidth and
+       falsely trip the e2e horizontal-overflow check). We deliberately do NOT
+       add an `overflow-x: hidden` fallback: `hidden` forces overflow-y→auto and
+       does exactly that. The real overflow guard is flex-wrap + min-width:0 on
+       the inner clusters, so the layout fits even if `clip` is unsupported. */
     overflow-x: clip;
 }
 

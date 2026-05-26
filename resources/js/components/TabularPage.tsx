@@ -196,6 +196,12 @@ export function TabularPage() {
 
     // ---- CSV export ---------------------------------------------------
     const handleExport = useCallback(() => {
+        // Guard: don't export an empty/partial CSV while the review is still
+        // loading or errored (the Export button renders regardless of state).
+        if (rows.length === 0) {
+            toast.push({ title: 'Export CSV', body: 'Nessun dato da esportare ancora.' });
+            return;
+        }
         const { headers, rows: body } = buildReviewMatrix(
             baseColumns,
             aiColumns,

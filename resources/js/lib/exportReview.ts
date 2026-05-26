@@ -9,24 +9,16 @@
 // ============================================================
 
 import type { AiColumn, BaseColumn, Cell, Row } from '../api/client';
-import { valueToText } from '../grid/format';
+import { cellDisplayText } from '../grid/format';
 
 /** Read-only view of a cell store keyed by `${rowId}:${columnIndex}`. */
 export interface CellLookup {
     get(rowId: string, columnIndex: number): Cell | undefined;
 }
 
-/** Render an AI cell to its export text (mirrors AgenticGrid's mirrorCellText). */
+/** Render an AI cell to its export text — shares `cellDisplayText` with the grid mirror. */
 export function aiCellText(cell: Cell | undefined, column: AiColumn): string {
-    if (cell == null) return '';
-    if (cell.status === 'generating' || cell.status === 'pending') return '';
-    const value = cell.content?.summary ?? null;
-    if (value == null) return '—';
-    if (column.format === 'rating') {
-        const n = typeof value === 'number' ? value : Number.parseInt(String(value), 10);
-        return Number.isFinite(n) ? `${Math.max(0, Math.min(5, n))}/5` : '—';
-    }
-    return valueToText(value);
+    return cellDisplayText(cell, column.format);
 }
 
 export interface ReviewMatrix {

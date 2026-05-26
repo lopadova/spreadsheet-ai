@@ -131,6 +131,27 @@ export function valueToText(value: unknown): string {
     return String(value);
 }
 
+/**
+ * Plain display text for an AI cell — the single source of truth shared by the
+ * canvas grid mirror (AgenticGrid) and the CSV export (exportReview), so the two
+ * never drift. Generating/pending/missing → '', null summary → '—', rating →
+ * clamped 'n/5', else `valueToText`.
+ */
+export function cellDisplayText(
+    cell: { status?: string | null; content?: { summary?: unknown } | null } | null | undefined,
+    format: string,
+): string {
+    if (cell == null) return '';
+    if (cell.status === 'generating' || cell.status === 'pending') return '';
+    const value = cell.content?.summary ?? null;
+    if (value == null) return '—';
+    if (format === 'rating') {
+        const n = typeof value === 'number' ? value : Number.parseInt(String(value), 10);
+        return Number.isFinite(n) ? `${Math.max(0, Math.min(5, n))}/5` : '—';
+    }
+    return valueToText(value);
+}
+
 /** Number of citations a cell carries (citations may be strings or objects). */
 export function citationCount(citations: unknown): number {
     if (Array.isArray(citations)) return citations.length;

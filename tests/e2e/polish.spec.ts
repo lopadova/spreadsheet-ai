@@ -28,15 +28,16 @@ test.describe('a11y — icon buttons expose accessible names (M6.2)', () => {
         // Theme toggle (icon-only) exposes aria-label.
         await expect(page.getByRole('button', { name: /Switch to light theme/i })).toBeVisible();
 
-        // Every <button> on the page has a non-empty accessible name (no bare
-        // icon buttons). Glide's internal canvas buttons aren't real <button>s.
+        // Every <button> has a real accessible name: visible text or aria-label
+        // (or aria-labelledby). `title` is a tooltip, NOT a reliable accessible
+        // name, so it does NOT count here. Glide's canvas isn't a real <button>.
         const namelessCount = await page.evaluate(() => {
             const buttons = Array.from(document.querySelectorAll('button'));
             return buttons.filter((b) => {
                 const aria = b.getAttribute('aria-label')?.trim();
-                const title = b.getAttribute('title')?.trim();
+                const labelledby = b.getAttribute('aria-labelledby')?.trim();
                 const text = b.textContent?.trim();
-                return !aria && !title && !text;
+                return !aria && !labelledby && !text;
             }).length;
         });
         expect(namelessCount).toBe(0);
