@@ -91,10 +91,10 @@ AskMyDocs code. These become guardrails or backlog items in the tasks below.
   2. **Local tests loop** — all green: `phpunit`, `vitest`, `vite build`, and (if UI/UX) **Playwright scenarios for every interaction**. Fix until green.
   3. **Local Copilot review loop (before any push)** — run the local Copilot CLI against the *complete* branch diff vs `origin/main`, invoking the `/review` skill, asking for regressions/bugs/bad-practices/security/improvements; fix every legitimate finding, re-run tests + review, loop until clean. See `AGENTS.md §Local Copilot review` for the exact command.
   4. Push the branch; open PR toward the working branch.
-  5. Add **GitHub Copilot** as reviewer; confirm its review actually started (GraphQL `requestReviewsByLogin` fallback with `botLogins[]='copilot-pull-request-reviewer[bot]'`, `union=true` if `gh pr edit --add-reviewer @copilot` fails on missing `read:project`).
-  6. Wait for **both** CI green **and** Copilot comments.
-  7. If all green → merge. Else fix broken tests + Copilot comments, push, re-request review, loop.
-  8. Only when fully green: task done → next task. Record findings in `docs/LESSON.md`, progress in `docs/PROGRESS.md`.
+  5. Add **GitHub Copilot** as reviewer via REST: `gh api --method POST repos/<owner>/<repo>/pulls/<PR>/requested_reviewers -f 'reviewers[]=copilot-pull-request-reviewer[bot]'`; confirm via `gh pr view <PR> --json reviewRequests` (`gh pr edit --add-reviewer @copilot` is a silent no-op).
+  6. **MANDATORY — never merge early**: wait for **GitHub Actions CI green** (`.github/workflows/ci.yml`: phpunit + typecheck + vitest + build + Playwright) **AND** a **posted Copilot review with zero unresolved comments**. Poll for minutes if needed.
+  7. If CI red or Copilot has comments → fix, push, re-request Copilot review, loop. Do NOT merge while CI is pending/red or Copilot hasn't reviewed.
+  8. Merge ONLY when CI green AND Copilot zero open comments → task done → next task. Record findings in `docs/LESSON.md`, progress in `docs/PROGRESS.md`.
 - **Pure-code tasks** need PHPUnit/Vitest only. **Any UI/UX task** additionally needs Playwright scenarios covering all interactions.
 - Update `docs/LESSON.md` whenever something non-obvious is learned (incl. from Copilot feedback). Update `docs/PROGRESS.md` after meaningful work, dated `YYYY-MM-DD`.
 - Every parallel sub-agent and every new session is handed `docs/LESSON.md` + this plan + `docs/RULES.md` + `AGENTS.md` in context.

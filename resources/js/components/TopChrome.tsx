@@ -19,16 +19,21 @@ export function TopChrome({ theme, onToggleTheme }: TopChromeProps) {
                     </div>
                 </div>
                 <span className="top-chrome-sep">·</span>
-                {NAV_LINKS.map((link) => (
-                    <a
-                        key={link}
-                        className="top-chrome-link"
-                        href="#"
-                        onClick={(e) => e.preventDefault()}
-                    >
-                        {link}
-                    </a>
-                ))}
+                {/* Nav targets are placeholders in this single-page demo, so they
+                    are buttons (not fake href="#" links) for correct a11y semantics. */}
+                <nav className="top-chrome-nav" aria-label="Sezioni">
+                    {NAV_LINKS.map((link) => (
+                        <button
+                            key={link}
+                            type="button"
+                            className="top-chrome-link"
+                            aria-disabled="true"
+                            title={`${link} (demo)`}
+                        >
+                            {link}
+                        </button>
+                    ))}
+                </nav>
             </div>
             <div className="top-chrome-right">
                 <span className="live-pill">

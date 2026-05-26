@@ -39,7 +39,12 @@ Live "where am I" log. Newest first. Resume from the top after any interruption.
 ### M3 outcome (2026-05-26) — MERGED (PR #4)
 - React 19 page shell: CSRF API client, TanStack Query hooks (useReview seeds cell store), cell store keyed row:col, components TopChrome/Hero/PresetChips/ActionBar/StatusFooter/GridPlaceholder/Toast/TabularPage. Vitest 30, e2e 3/3, typecheck+build clean. Local Copilot review applied. base_columns lacks width (M4 assigns).
 
+### M4 outcome (2026-05-26) — MERGED (PR #5)
+- Glide canvas grid + 17 renderers + live SSE (single EventSource, run-token guard, atomic updateCells, skeleton+progress) + a11y mirror table. Vitest 63, e2e 6/6, visual matches banner. Local Copilot review applied. SSE blocks single artisan-serve worker → Playwright workers:1.
+
 ### Next
+- **M5 — Column editor, AI Suggest, bulk, citation panel** (in progress): editor drawer (17-format picker, enum input, prompt textarea, Auto-generate, json_path help, cost card) → Save → regenerate column via SSE; add/delete column; AI Suggest full picker → add+generate; cell click → citation side-panel (value/flag/reasoning/citation/prompt + Regenerate + Copy); Glide multi-select → bulk regenerate. Vitest + Playwright every interaction.
+
 - **M4 — Glide Data Grid + 17 renderers + SSE consumer** (in progress): replace GridPlaceholder with @glideapps/glide-data-grid canvas; 17 custom cell renderers (fix prototype bugs: RJsonPath auto-detect, stable citation numbering, percentage NaN guard, url protocol); confidence dot + citation badge + flag tint; skeleton(Loading)+progress; single EventSource → atomic updateCells; run-token guard on preset switch; Run all/Stop. Vitest + Playwright.
 
 - **M3 — Frontend shell + page composition** (in progress): TopChrome, HeroBanner (stats), PresetChips, ActionBar (AI Suggest, Add column, Live/Mock toggle, Export, Share, Run all), StatusFooter; TanStack Query client + hooks on the M2 contract; cell store; placeholder grid region (real Glide grid = M4). Vitest + Playwright.

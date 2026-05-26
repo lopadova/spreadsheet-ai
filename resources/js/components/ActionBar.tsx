@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import type { Suggestion } from '../api/client';
+import { AiSuggestPopover } from './AiSuggestPopover';
 
 export interface RunProgress {
     done: number;
@@ -45,8 +46,18 @@ export function ActionBar({
     suggestionsLoading = false,
 }: ActionBarProps) {
     const [popOpen, setPopOpen] = useState(false);
+    const [anchor, setAnchor] = useState<{ top: number; left: number }>({ top: 96, left: 32 });
     const aiBtnRef = useRef<HTMLButtonElement>(null);
     const pct = progress.total > 0 ? Math.min(100, (progress.done / progress.total) * 100) : 0;
+
+    const togglePopover = () => {
+        const btn = aiBtnRef.current;
+        if (btn && typeof btn.getBoundingClientRect === 'function') {
+            const r = btn.getBoundingClientRect();
+            if (r.width || r.height) setAnchor({ top: r.bottom + 8, left: r.left });
+        }
+        setPopOpen((v) => !v);
+    };
 
     useEffect(() => {
         if (!popOpen) return;
@@ -66,7 +77,7 @@ export function ActionBar({
                     type="button"
                     aria-haspopup="menu"
                     aria-expanded={popOpen}
-                    onClick={() => setPopOpen((v) => !v)}
+                    onClick={togglePopover}
                 >
                     <SparkleIcon />
                     <span>AI Suggest</span>
@@ -149,49 +160,17 @@ export function ActionBar({
                 )}
             </div>
 
-            {popOpen && (
-                <>
-                    <div className="popover-veil" onClick={() => setPopOpen(false)} />
-                    <div
-                        className="popover ai-suggest-pop"
-                        role="menu"
-                        aria-label="AI suggested columns"
-                        style={{ top: 96, left: 32 }}
-                    >
-                        <div className="popover-head">
-                            <SparkleIcon />
-                            <b style={{ fontSize: 12.5 }}>Colonne suggerite</b>
-                        </div>
-                        <div className="popover-list">
-                            {suggestionsLoading && <div className="empty">Caricamento…</div>}
-                            {!suggestionsLoading && suggestions.length === 0 && (
-                                <div className="empty">Nessun suggerimento</div>
-                            )}
-                            {!suggestionsLoading &&
-                                suggestions.map((s) => (
-                                    <button
-                                        key={s.name}
-                                        type="button"
-                                        role="menuitem"
-                                        className="popover-item"
-                                        onClick={() => {
-                                            onPickSuggestion(s);
-                                            setPopOpen(false);
-                                        }}
-                                    >
-                                        <SparkleIcon />
-                                        <span style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
-                                            <b style={{ fontSize: 12.5 }}>{s.name}</b>
-                                            <small className="tertiary mono" style={{ fontSize: 10.5 }}>
-                                                {s.format}
-                                            </small>
-                                        </span>
-                                    </button>
-                                ))}
-                        </div>
-                    </div>
-                </>
-            )}
+            <AiSuggestPopover
+                open={popOpen}
+                suggestions={suggestions}
+                loading={suggestionsLoading}
+                anchor={anchor}
+                onPick={(s) => {
+                    onPickSuggestion(s);
+                    setPopOpen(false);
+                }}
+                onClose={() => setPopOpen(false)}
+            />
         </div>
     );
 }

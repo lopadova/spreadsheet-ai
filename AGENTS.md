@@ -32,20 +32,19 @@ default + Live toggle).
   2. **Local Copilot review loop** (BEFORE any push) — run the local Copilot CLI against the *complete* branch diff vs `origin/main`, fix everything it flags, re-run, loop until clean. See the exact command below.
   3. Push the branch; open PR toward the working branch.
   4. **GitHub Copilot** requested as reviewer and its review confirmed started.
-  5. **GitHub CI + Copilot loop (bounded)** — wait for CI green **and** Copilot comments; fix broken tests + comments, push, re-request review, loop. **Bounded wait**: GitHub Copilot review is currently NOT serviced on this repo (see `docs/LESSON.md`); if it doesn't materialize within ~3–5 min, the local Copilot `/review` + green local tests are the binding gate — record it in `docs/PROGRESS.md` and proceed.
-  6. All green → merge. Record findings in `docs/LESSON.md`; update `docs/PROGRESS.md`. Only then move to the next task.
+  5. **GitHub CI + Copilot loop (MANDATORY — never merge early)** — after pushing, the **GitHub Actions CI** (`.github/workflows/ci.yml`: phpunit + vitest + typecheck + build + Playwright) MUST run and go **green**, AND the **GitHub Copilot review MUST actually post** and have **zero unresolved comments**. Poll/wait as long as needed (minutes); do NOT merge while CI is pending/red or while Copilot has not reviewed or has open comments. If CI fails or Copilot leaves comments → fix, push, re-request Copilot review, and loop. Re-request Copilot via the REST endpoint (step 4) and verify it shows in `reviewRequests`.
+  6. Merge ONLY when **CI is green AND Copilot has reviewed with zero open comments**. Then record findings in `docs/LESSON.md`; update `docs/PROGRESS.md`. Only then move to the next task.
 - Pure-code tasks: PHPUnit/Vitest suffice. UI/UX tasks: Playwright is required too.
 
 ### Local Copilot review (step 2 — before push)
-Run the Copilot CLI in autopilot and pass it the **full branch diff vs `origin/main`** as context, invoking the **`/review`** skill explicitly (do NOT rely on open files or just changed-branch files — give it the complete diff so it has context):
+Write the **full branch diff vs `origin/main`** to a gitignored file (inline `$(git diff …)` overflows the OS arg limit on large diffs — see `docs/LESSON.md`), then tell the Copilot CLI to read it and invoke the **`/review`** skill (give it the complete diff, not just open/changed files):
 
 ```bash
-copilot --autopilot --yolo -p "/review the following COMPLETE diff of the current branch against origin/main. Check thoroughly for regressions, bugs, bad practices, security issues, and possible improvements, and report concrete fixes:
-
-$(git diff origin/main...HEAD)"
+git diff origin/main...HEAD > .review-diff.patch
+copilot --autopilot --yolo -p "Read .review-diff.patch (the COMPLETE diff of this branch vs origin/main). /review it for regressions, bugs, bad practices, security issues, and improvements; apply safe fixes and report the rest. Keep the test gates green."
 ```
 
-Fix every legitimate finding, re-run the local tests, re-run this local review, and loop until clean. Only then push. Record non-obvious findings in `docs/LESSON.md`.
+Fix every legitimate finding, re-run the local tests, re-run this local review, and loop until clean. Only then push. Record non-obvious findings in `docs/LESSON.md`. (`.review-diff.patch` is gitignored.)
 
 ### Requesting GitHub Copilot review (step 4)
 **Working method (verified PR #1):** the REST endpoint —

@@ -87,12 +87,11 @@ describe('api client CSRF + headers', () => {
         expect(new Headers(init.headers).get('X-XSRF-TOKEN')).toBe('tok/en123');
     });
 
-    it('DELETE deleteColumn carries CSRF and parses 204', async () => {
-        const fetchFn = vi.fn(
-            async (..._args: FetchArgs) => new Response(null, { status: 204 }),
-        );
-        vi.stubGlobal('fetch', fetchFn);
-        await expect(deleteColumn(5, 2)).resolves.toBeUndefined();
+    it('DELETE deleteColumn carries CSRF and returns the refreshed review payload', async () => {
+        // The backend re-hydrates and returns the full review (200), not 204.
+        const payload = { review: { id: 5 }, columns: [], rows: [], cells: [] };
+        const fetchFn = mockFetch(payload);
+        await expect(deleteColumn(5, 2)).resolves.toMatchObject({ review: { id: 5 } });
         const [url, init] = fetchFn.mock.calls[0];
         expect(url).toBe('/api/reviews/5/columns/2');
         expect(init.method).toBe('DELETE');

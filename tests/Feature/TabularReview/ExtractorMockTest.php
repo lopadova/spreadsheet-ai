@@ -109,4 +109,24 @@ class ExtractorMockTest extends TestCase
         $this->assertContains('RET-1042', $seen);
         $this->assertContains('RET-1055', $seen);
     }
+
+    public function test_force_false_skips_ready_cells_and_force_true_regenerates(): void
+    {
+        $review = $this->returnsReview();
+        $extractor = app(TabularReviewExtractor::class);
+        $preset = PresetData::preset('returns');
+        $row = $preset['rows'][0]; // RET-1042
+
+        // First run populates the row's cells (status = ready).
+        $first = $extractor->extractRow($review, $row, 0, 'RET-1042');
+        $this->assertNotEmpty($first);
+
+        // Re-run WITHOUT force → all cells already ready → nothing regenerated.
+        $skipped = $extractor->extractRow($review, $row, 0, 'RET-1042', null, null, false);
+        $this->assertSame([], $skipped);
+
+        // Re-run WITH force → every targeted cell is recomputed.
+        $forced = $extractor->extractRow($review, $row, 0, 'RET-1042', null, null, true);
+        $this->assertCount(count($preset['ai_cols']), $forced);
+    }
 }

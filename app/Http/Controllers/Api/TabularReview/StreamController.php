@@ -27,7 +27,7 @@ class StreamController extends Controller
      *
      * Query params:
      *  - cols=0,1   restrict to these column indexes
-     *  - force=1    (accepted; mock always regenerates)
+     *  - force=1    recompute every targeted cell (else cells already `ready` are skipped)
      */
     public function stream(Request $request, int $id): StreamedResponse
     {
@@ -38,12 +38,13 @@ class StreamController extends Controller
         }
 
         $columnIndexes = $this->parseCols($request->query('cols'));
+        $force = $request->boolean('force');
         $preset = PresetData::preset((string) $review->preset_key) ?? [];
         $rows = array_values($preset['rows'] ?? []);
         $pacingMs = (int) config('tabular.sse_pacing_ms', 120);
         $mock = (bool) config('tabular.mock', true);
 
-        return new StreamedResponse(function () use ($review, $rows, $columnIndexes, $pacingMs, $mock): void {
+        return new StreamedResponse(function () use ($review, $rows, $columnIndexes, $force, $pacingMs, $mock): void {
             $onCell = function (TabularCell $cell) use ($pacingMs, $mock): void {
                 $this->emit('cell', [
                     'row_id' => $cell->row_id,
@@ -63,7 +64,7 @@ class StreamController extends Controller
                 $rowId = $this->extractor->rowId($row, $rowIndex);
 
                 try {
-                    $this->extractor->extractRow($review, $row, $rowIndex, $rowId, $onCell, $columnIndexes);
+                    $this->extractor->extractRow($review, $row, $rowIndex, $rowId, $onCell, $columnIndexes, $force);
                 } catch (\Throwable $e) {
                     // Never 500 mid-stream — emit a red cell for EVERY affected column
                     // so the client is never stuck waiting for a cell event that won't arrive.

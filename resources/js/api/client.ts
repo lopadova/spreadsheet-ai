@@ -162,8 +162,10 @@ export function getSuggestions(preset: string): Promise<SuggestionsResponse> {
     return apiFetch<SuggestionsResponse>(`/api/suggest/${encodeURIComponent(preset)}`);
 }
 
-export function addColumn(reviewId: number, col: ColumnInput): Promise<AiColumn> {
-    return apiFetch<AiColumn>(`/api/reviews/${reviewId}/columns`, {
+// Column mutations all return the FULL refreshed review payload (the backend
+// re-hydrates via ReviewHydrator), so the client can seed the cache directly.
+export function addColumn(reviewId: number, col: ColumnInput): Promise<ReviewResponse> {
+    return apiFetch<ReviewResponse>(`/api/reviews/${reviewId}/columns`, {
         method: 'POST',
         body: JSON.stringify(col),
     });
@@ -173,15 +175,15 @@ export function updateColumn(
     reviewId: number,
     index: number,
     col: Partial<ColumnInput>,
-): Promise<AiColumn> {
-    return apiFetch<AiColumn>(`/api/reviews/${reviewId}/columns/${index}`, {
+): Promise<ReviewResponse> {
+    return apiFetch<ReviewResponse>(`/api/reviews/${reviewId}/columns/${index}`, {
         method: 'PATCH',
         body: JSON.stringify(col),
     });
 }
 
-export function deleteColumn(reviewId: number, index: number): Promise<void> {
-    return apiFetch<void>(`/api/reviews/${reviewId}/columns/${index}`, {
+export function deleteColumn(reviewId: number, index: number): Promise<ReviewResponse> {
+    return apiFetch<ReviewResponse>(`/api/reviews/${reviewId}/columns/${index}`, {
         method: 'DELETE',
     });
 }

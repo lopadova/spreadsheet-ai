@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\TabularCell;
 use App\Models\TabularReview;
+use App\Models\Workflow;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -63,5 +64,22 @@ class TabularModelTest extends TestCase
             'row_id' => '42',
             'column_index' => 3,
         ]);
+    }
+
+    public function test_duplicate_workflow_tenant_preset_throws(): void
+    {
+        Workflow::factory()->create(['tenant_id' => 'demo', 'preset_key' => 'returns']);
+
+        $this->expectException(QueryException::class);
+
+        Workflow::factory()->create(['tenant_id' => 'demo', 'preset_key' => 'returns']);
+    }
+
+    public function test_workflows_with_null_preset_key_do_not_collide(): void
+    {
+        Workflow::factory()->create(['tenant_id' => 'demo', 'preset_key' => null]);
+        Workflow::factory()->create(['tenant_id' => 'demo', 'preset_key' => null]);
+
+        $this->assertSame(2, Workflow::query()->whereNull('preset_key')->count());
     }
 }

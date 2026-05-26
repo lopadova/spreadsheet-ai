@@ -16,7 +16,9 @@ class WorkflowFactory extends Factory
     {
         return [
             'tenant_id' => 'demo',
-            'preset_key' => fake()->randomElement(['returns', 'fraud', 'articles', 'email', 'formats']),
+            // Null by default so factory-made workflows never collide on the
+            // unique (tenant_id, preset_key) index (NULLs are distinct).
+            'preset_key' => null,
             'title' => fake()->sentence(3),
             'description' => fake()->optional()->sentence(),
             'row_source' => fake()->randomElement(['returns_rows', 'orders', 'articles', 'email_campaigns']),

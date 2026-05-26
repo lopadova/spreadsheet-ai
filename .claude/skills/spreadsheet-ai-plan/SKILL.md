@@ -33,9 +33,9 @@ Mock-default + Live LLM toggle.
    a. **Define guardrails as tests** up front before implementation.
    b. **Local tests** green (phpunit, vitest, vite build, Playwright for UI).
    c. **Local Copilot review** (before push): see `AGENTS.md §Local Copilot review` for the exact command. Fix + re-run + loop until clean.
-   d. Push → open PR → request **GitHub Copilot** review (confirm started; GraphQL `requestReviewsByLogin` fallback).
-   e. Wait for CI **and** Copilot → fix → re-push/re-request → merge only when all green.
-   f. Record findings in `docs/LESSON.md`; update `docs/PROGRESS.md`.
+   d. Push → open PR → request **GitHub Copilot** review via REST `gh api --method POST repos/<owner>/<repo>/pulls/<PR>/requested_reviewers -f 'reviewers[]=copilot-pull-request-reviewer[bot]'` (confirm via `reviewRequests`).
+   e. **MANDATORY — never merge early**: wait for **GitHub Actions CI green** AND a **posted Copilot review with zero open comments**. Poll for minutes if needed. CI red or Copilot comments → fix, push, re-request, loop.
+   f. Merge ONLY when CI green AND Copilot zero open comments. Record findings in `docs/LESSON.md`; update `docs/PROGRESS.md`.
 5. After each meaningful step: update `docs/PROGRESS.md`. On any non-obvious learning (incl. Copilot feedback): update `docs/LESSON.md`.
 
 ## Macro task order

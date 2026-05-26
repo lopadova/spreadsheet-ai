@@ -1080,3 +1080,375 @@ button {
         display: none;
     }
 }
+
+/* ============================================================
+   M5 — Column editor drawer, format picker, cost card, AI Suggest
+   popover, cell side-panel, bulk toolbar.
+   Ported from the prototype demo.css/styles.css, reusing tokens.
+   ============================================================ */
+
+/* Shared form controls (drawer inputs) */
+.input {
+    width: 100%;
+    padding: 8px 11px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--bg-elevated);
+    color: var(--text);
+    font-size: 13px;
+    font-family: inherit;
+    outline: 0;
+    transition: border-color 80ms, box-shadow 80ms;
+}
+.input:focus {
+    border-color: var(--accent-border);
+    box-shadow: 0 0 0 3px var(--accent-bg);
+}
+.input::placeholder {
+    color: var(--text-tertiary);
+}
+.btn.ghost {
+    background: transparent;
+    border-color: transparent;
+}
+.btn.ghost:hover {
+    background: var(--bg-hover);
+    border-color: var(--border);
+}
+
+/* Format icon chip (popover + side-panel header) */
+.col-fmt-ico {
+    width: 18px;
+    height: 18px;
+    border-radius: 4px;
+    background: var(--ai-bg);
+    color: var(--ai);
+    display: grid;
+    place-items: center;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 700;
+    border: 1px solid var(--ai-bd);
+    flex-shrink: 0;
+}
+.ai-suggest-pop {
+    width: 420px;
+    max-width: calc(100vw - 24px);
+}
+.popover-head .badge.running {
+    flex-shrink: 0;
+}
+
+/* ---- Drawer ---- */
+.overlay {
+    position: fixed;
+    inset: 0;
+    background: var(--bg-overlay);
+    z-index: 100;
+    animation: fadeIn 120ms ease-out;
+}
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+.drawer {
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 560px;
+    max-width: 92vw;
+    background: var(--bg-elevated);
+    border-left: 1px solid var(--border);
+    z-index: 101;
+    display: flex;
+    flex-direction: column;
+    animation: drawerIn 180ms ease-out;
+    box-shadow: var(--shadow-overlay);
+}
+@keyframes drawerIn {
+    from { transform: translateX(20px); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+}
+.wide-drawer { width: 620px; }
+.drawer-head {
+    padding: 12px 18px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-shrink: 0;
+}
+.drawer-body {
+    flex: 1;
+    overflow: auto;
+}
+.drawer-foot {
+    padding: 12px 18px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 8px;
+    background: var(--bg-subtle);
+    flex-shrink: 0;
+}
+
+.form-row {
+    margin-bottom: 18px;
+}
+.form-row label {
+    display: block;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-tertiary);
+    font-weight: 600;
+    margin-bottom: 6px;
+}
+.prompt-input {
+    resize: vertical;
+    min-height: 100px;
+    line-height: 1.5;
+}
+.autogen-btn {
+    color: var(--ai) !important;
+    background: var(--ai-bg);
+    border-color: var(--ai-bd);
+}
+.autogen-btn:hover {
+    background: var(--ai-bg);
+    border-color: var(--ai);
+}
+
+.fmt-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 6px;
+}
+.fmt-card {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+    padding: 8px 10px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--bg-elevated);
+    cursor: pointer;
+    text-align: left;
+    transition: border-color 80ms, background 80ms;
+    min-height: 64px;
+}
+.fmt-card:hover {
+    border-color: var(--border-strong);
+    background: var(--bg-hover);
+}
+.fmt-card.active {
+    border-color: var(--ai);
+    background: var(--ai-bg);
+    box-shadow: 0 0 0 2px var(--ai-bg);
+}
+.fmt-card-ico {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--ai);
+    margin-bottom: 2px;
+}
+.fmt-card-label {
+    font-size: 11.5px;
+    font-weight: 600;
+    color: var(--text);
+}
+.fmt-card-sub {
+    font-size: 10px;
+    color: var(--text-tertiary);
+    font-weight: 400;
+    line-height: 1.2;
+}
+
+.cost-card {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 12px;
+    padding: 12px 14px;
+    background: var(--bg-subtle);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    margin-top: 4px;
+}
+.cost-card > div small {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    font-weight: 600;
+    display: block;
+    margin-bottom: 4px;
+}
+.cost-card > div b {
+    font-size: 12.5px;
+}
+
+/* ---- Cell side-panel ---- */
+.cell-panel {
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 380px;
+    max-width: 92vw;
+    background: var(--bg-elevated);
+    border-left: 1px solid var(--border);
+    z-index: 90;
+    display: flex;
+    flex-direction: column;
+    animation: drawerIn 160ms ease-out;
+    box-shadow: var(--shadow-overlay);
+}
+.cell-panel-head {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-shrink: 0;
+}
+.cell-panel-body {
+    flex: 1;
+    overflow: auto;
+    padding: 16px;
+}
+.cp-section {
+    margin-bottom: 16px;
+}
+.cp-label {
+    display: block;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-tertiary);
+    font-weight: 600;
+    margin-bottom: 6px;
+}
+.cp-value {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text);
+    word-break: break-word;
+}
+.cp-flag {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12.5px;
+    color: var(--text-secondary);
+}
+.cp-reasoning {
+    font-size: 12.5px;
+    line-height: 1.5;
+    color: var(--text-secondary);
+}
+.cp-citations {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+.cp-citation {
+    display: flex;
+    gap: 8px;
+    font-size: 12px;
+    line-height: 1.45;
+    color: var(--text-secondary);
+    background: var(--bg-subtle);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 8px 10px;
+}
+.cit-marker {
+    flex-shrink: 0;
+    width: 16px;
+    height: 16px;
+    border-radius: 4px;
+    background: var(--ai-bg);
+    color: var(--ai);
+    border: 1px solid var(--ai-bd);
+    display: grid;
+    place-items: center;
+    font-family: var(--font-mono);
+    font-size: 9px;
+    font-weight: 700;
+}
+.cp-prompt-toggle {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-tertiary);
+    font-weight: 600;
+    background: transparent;
+    border: 0;
+    cursor: pointer;
+    padding: 0;
+}
+.cp-prompt-toggle:hover {
+    color: var(--text-secondary);
+}
+.cp-prompt {
+    margin: 8px 0 0;
+    padding: 10px 12px;
+    background: var(--bg-subtle);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    line-height: 1.5;
+    color: var(--text-secondary);
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+.cell-panel-foot {
+    padding: 12px 16px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    gap: 8px;
+    background: var(--bg-subtle);
+    flex-shrink: 0;
+}
+.cell-panel-foot .btn {
+    flex: 1;
+    justify-content: center;
+}
+
+/* ---- Bulk toolbar ---- */
+.bulk-toolbar {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 95;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 14px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-overlay);
+    animation: bulkIn 140ms ease-out;
+}
+@keyframes bulkIn {
+    from { transform: translate(-50%, 8px); opacity: 0; }
+    to { transform: translate(-50%, 0); opacity: 1; }
+}
+.bulk-count {
+    font-size: 12.5px;
+    color: var(--text-secondary);
+}
+.bulk-count b {
+    color: var(--text);
+}

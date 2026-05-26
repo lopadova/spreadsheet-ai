@@ -1,25 +1,57 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import type { DataEditorRef } from '@glideapps/glide-data-grid';
+import type { DataEditorRef, GridSelection } from '@glideapps/glide-data-grid';
+import { CompactSelection } from '@glideapps/glide-data-grid';
 import { TopChrome, type Theme } from './TopChrome';
 import { HeroBanner } from './HeroBanner';
 import { PresetChips } from './PresetChips';
 import { ActionBar } from './ActionBar';
 import { StatusFooter } from './StatusFooter';
+import { ColumnEditor, type ColumnEditorMode } from './ColumnEditor';
+import { CellSidePanel, type CellSelection } from './CellSidePanel';
+import { BulkToolbar } from './BulkToolbar';
 import { useToast } from './ToastProvider';
-import { useReview, useSuggestions } from '../hooks/useReview';
-import { useCellStore } from '../store/cells';
+import {
+    useAddColumn,
+    useDeleteColumn,
+    useReview,
+    useSuggestions,
+    useUpdateColumn,
+} from '../hooks/useReview';
+import { cellKey, useCellStore } from '../store/cells';
 import { sharedCellStore } from '../store/sharedCellStore';
 import { computeHeroStats } from '../lib/stats';
 import { DEFAULT_PRESET, presetMeta } from '../lib/presets';
 import { AgenticGrid } from '../grid/AgenticGrid';
 import { useSseGeneration } from '../grid/useSseGeneration';
-import type { AiColumn, Suggestion } from '../api/client';
+import { selectedAiColumnIndexes } from '../grid/selection';
+import type { AiColumn, ColumnInput, ReviewResponse, Suggestion } from '../api/client';
+
+const EMPTY_SELECTION: GridSelection = {
+    columns: CompactSelection.empty(),
+    rows: CompactSelection.empty(),
+};
+
+/** Highest AI-column index in a review payload (the just-appended column). */
+function lastColumnIndex(review: ReviewResponse): number {
+    return review.columns.reduce((max, c) => Math.max(max, c.index), -1);
+}
 
 export function TabularPage() {
     const [theme, setTheme] = useState<Theme>('dark');
     const [preset, setPreset] = useState<string>(DEFAULT_PRESET);
     const [liveMode, setLiveMode] = useState(false);
     const [themeVersion, setThemeVersion] = useState(0);
+
+    // Column editor drawer.
+    const [editorOpen, setEditorOpen] = useState(false);
+    const [editorMode, setEditorMode] = useState<ColumnEditorMode>('new');
+    const [editorColumn, setEditorColumn] = useState<AiColumn | null>(null);
+
+    // Cell side-panel.
+    const [cellSel, setCellSel] = useState<CellSelection | null>(null);
+
+    // Grid selection (controlled) for bulk regenerate.
+    const [gridSelection, setGridSelection] = useState<GridSelection>(EMPTY_SELECTION);
 
     const toast = useToast();
     const reviewQuery = useReview(preset);
@@ -28,27 +60,32 @@ export function TabularPage() {
 
     const gridRef = useRef<DataEditorRef | null>(null);
 
+    // Switching presets changes the columns/rows entirely, so any column/cell
+    // selection from the previous preset is invalid — clear it (otherwise the
+    // bulk toolbar could act on the wrong preset's columns).
+    useEffect(() => {
+        setGridSelection(EMPTY_SELECTION);
+        setCellSel(null);
+    }, [preset]);
+
     useEffect(() => {
         document.documentElement.dataset.theme = theme;
-        // Bump so the grid rebuilds its theme from the new CSS tokens.
         setThemeVersion((v) => v + 1);
     }, [theme]);
 
     const meta = presetMeta(preset);
     const data = reviewQuery.data;
     const loading = reviewQuery.isPending;
+    const reviewId = data?.review.id;
 
     const rows = useMemo(() => data?.rows ?? [], [data]);
     const aiColumns = useMemo(() => data?.columns ?? [], [data]);
     const baseColumns = useMemo(() => data?.base_columns ?? [], [data]);
 
-    const stats = useMemo(
-        () => computeHeroStats(rows, aiColumns),
-        [rows, aiColumns],
-    );
+    const stats = useMemo(() => computeHeroStats(rows, aiColumns), [rows, aiColumns]);
 
-    const { running, progress, runAll, stop } = useSseGeneration({
-        reviewId: data?.review.id,
+    const { running, progress, runAll, runColumns, stop } = useSseGeneration({
+        reviewId,
         rows,
         columns: aiColumns,
         store: sharedCellStore,
@@ -56,20 +93,150 @@ export function TabularPage() {
         baseColumnCount: baseColumns.length,
     });
 
-    const onPickSuggestion = useCallback(
-        (s: Suggestion) => {
-            // Full picker + generation is M5; here we surface the choice.
-            toast.push({ title: 'AI Suggest', body: `Colonna "${s.name}" pronta (M5)` });
+    const addColumn = useAddColumn(preset, reviewId);
+    const updateColumn = useUpdateColumn(preset, reviewId);
+    const deleteColumn = useDeleteColumn(preset, reviewId);
+
+    // Regenerate a column right after its add/update mutation resolves. We call
+    // runColumns() directly from onSuccess (the column already exists server-side
+    // and in the cache via setQueryData) rather than watching `aiColumns` in an
+    // effect — React Query's structural sharing can keep the same array reference
+    // after an optimistic update, so an effect dep on `aiColumns` may never fire.
+
+    // ---- Column editor ------------------------------------------------
+    const openNewColumn = useCallback(() => {
+        setEditorMode('new');
+        setEditorColumn(null);
+        setEditorOpen(true);
+    }, []);
+
+    const openEditColumn = useCallback((col: AiColumn) => {
+        setEditorMode('edit');
+        setEditorColumn(col);
+        setEditorOpen(true);
+    }, []);
+
+    const handleEditorSubmit = useCallback(
+        (payload: ColumnInput, mode: ColumnEditorMode, index?: number) => {
+            // Keep the drawer open if the mutation fails (e.g. validation), so the
+            // user doesn't lose their input; close only on success.
+            const onError = () =>
+                toast.push({ title: 'Salvataggio fallito', body: 'Controlla i campi e riprova.' });
+
+            if (mode === 'edit' && index != null) {
+                updateColumn.mutate(
+                    { index, col: payload },
+                    {
+                        onSuccess: () => {
+                            runColumns([index]);
+                            toast.push({ title: 'Colonna aggiornata', body: payload.name });
+                            setEditorOpen(false);
+                        },
+                        onError,
+                    },
+                );
+            } else {
+                addColumn.mutate(payload, {
+                    onSuccess: (review) => {
+                        // New column's index from the returned payload (robust to
+                        // prior deletes); it already exists in the cache here.
+                        runColumns([lastColumnIndex(review)]);
+                        toast.push({ title: 'Colonna aggiunta', body: payload.name });
+                        setEditorOpen(false);
+                    },
+                    onError,
+                });
+            }
         },
-        [toast],
+        [addColumn, updateColumn, runColumns, toast],
     );
 
-    const onEditColumn = useCallback(
-        (col: AiColumn) => {
-            toast.push({ title: 'Edit column', body: `Editor "${col.name}" in M5` });
+    const handleEditorDelete = useCallback(
+        (index: number) => {
+            deleteColumn.mutate(index, {
+                onSuccess: () => {
+                    toast.push({ title: 'Colonna eliminata', body: `col ${index}` });
+                    setEditorOpen(false);
+                    // Backend destroy() reindexes columns after the deleted one, so a
+                    // panel at-or-after that index is now invalid — close it. Column
+                    // positions also shift, so drop the (now-stale) grid selection.
+                    setCellSel((s) => (s != null && s.columnIndex >= index ? null : s));
+                    setGridSelection(EMPTY_SELECTION);
+                },
+                // Keep the editor open + inform the user if the delete fails.
+                onError: () =>
+                    toast.push({ title: 'Eliminazione fallita', body: `Impossibile eliminare la colonna ${index}.` }),
+            });
         },
-        [toast],
+        [deleteColumn, toast],
     );
+
+    // ---- AI Suggest ---------------------------------------------------
+    const onPickSuggestion = useCallback(
+        (s: Suggestion) => {
+            addColumn.mutate(
+                {
+                    name: s.name,
+                    format: s.format,
+                    prompt: s.prompt,
+                    enum_values: s.enum_values,
+                },
+                {
+                    onSuccess: (review) => {
+                        runColumns([lastColumnIndex(review)]);
+                        toast.push({ title: 'AI Suggest', body: `Colonna "${s.name}" aggiunta` });
+                    },
+                },
+            );
+        },
+        [addColumn, runColumns, toast],
+    );
+
+    // ---- Cell side-panel ----------------------------------------------
+    const onCellClicked = useCallback((rowId: string, columnIndex: number) => {
+        setCellSel({ rowId, columnIndex });
+    }, []);
+
+    // Read via the reactive `cells` map so a regenerate re-stream re-renders the
+    // panel (a direct store.get() during render wouldn't subscribe to updates).
+    const selectedCell = cellSel
+        ? cells.get(cellKey(cellSel.rowId, cellSel.columnIndex))
+        : undefined;
+    const selectedColumn = cellSel
+        ? aiColumns.find((c) => c.index === cellSel.columnIndex)
+        : undefined;
+
+    // ---- Bulk selection ----------------------------------------------
+    const bulkColumns = useMemo(
+        () => selectedAiColumnIndexes(gridSelection, aiColumns, baseColumns.length),
+        [gridSelection, aiColumns, baseColumns.length],
+    );
+
+    const clearSelection = useCallback(() => setGridSelection(EMPTY_SELECTION), []);
+
+    // Keyboard-accessible mirror of canvas column-select: toggle a whole AI
+    // column in/out of the selection. Drives both the canvas highlight and the
+    // bulk toolbar.
+    const toggleColumnSelect = useCallback((gridColumn: number) => {
+        setGridSelection((prev) => {
+            const has = prev.columns.hasIndex(gridColumn);
+            return {
+                ...prev,
+                columns: has
+                    ? prev.columns.remove(gridColumn)
+                    : prev.columns.add(gridColumn),
+            };
+        });
+    }, []);
+
+    const selectedGridColumns = useMemo(
+        () => new Set(gridSelection.columns.toArray()),
+        [gridSelection],
+    );
+
+    const regenerateBulk = useCallback(() => {
+        if (bulkColumns.length > 0) runColumns(bulkColumns);
+    }, [bulkColumns, runColumns]);
 
     return (
         <div className="page-root">
@@ -78,7 +245,7 @@ export function TabularPage() {
                 <HeroBanner stats={stats} loading={loading} />
                 <PresetChips active={preset} onPick={setPreset} />
                 <ActionBar
-                    onAddColumn={() => toast.push({ title: 'Add column', body: 'Editor colonna in M5' })}
+                    onAddColumn={openNewColumn}
                     onExport={() => toast.push({ title: 'Export XLSX', body: 'Export simulato — demo' })}
                     onShare={() => toast.push({ title: 'Share', body: 'Share simulato — demo' })}
                     onRun={runAll}
@@ -104,12 +271,42 @@ export function TabularPage() {
                         store={sharedCellStore}
                         gridRef={gridRef}
                         loading={loading}
-                        onEditColumn={onEditColumn}
+                        onEditColumn={openEditColumn}
+                        onCellClicked={onCellClicked}
+                        gridSelection={gridSelection}
+                        onGridSelectionChange={setGridSelection}
+                        onToggleColumnSelect={toggleColumnSelect}
+                        selectedGridColumns={selectedGridColumns}
                         themeVersion={themeVersion}
                     />
                 )}
                 <StatusFooter preset={meta} rowCount={rows.length} cells={cells} />
             </div>
+
+            <BulkToolbar
+                selectedColumns={bulkColumns}
+                onRegenerate={regenerateBulk}
+                onClear={clearSelection}
+            />
+
+            <ColumnEditor
+                open={editorOpen}
+                mode={editorMode}
+                column={editorColumn}
+                onSubmit={handleEditorSubmit}
+                onDelete={handleEditorDelete}
+                onClose={() => setEditorOpen(false)}
+                saving={addColumn.isPending || updateColumn.isPending}
+            />
+
+            <CellSidePanel
+                open={cellSel != null}
+                selection={cellSel}
+                cell={selectedCell}
+                column={selectedColumn}
+                onClose={() => setCellSel(null)}
+                onRegenerate={(columnIndex) => runColumns([columnIndex])}
+            />
         </div>
     );
 }

@@ -57,7 +57,7 @@ test.describe('Tabular Review page shell (M3)', () => {
         const menu = page.getByRole('menu', { name: /AI suggested columns/i });
         await expect(menu).toBeVisible();
         // returns preset suggestions include the chargeback proposal.
-        await expect(menu.getByText(/chargeback/i)).toBeVisible();
+        await expect(menu.getByRole('menuitem', { name: /chargeback/i })).toBeVisible();
         await expect(menu.getByRole('menuitem')).toHaveCount(3);
     });
 });

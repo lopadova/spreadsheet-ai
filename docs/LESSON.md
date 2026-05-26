@@ -3,7 +3,41 @@
 Non-obvious facts, fixes, and gotchas. Append dated entries (`YYYY-MM-DD`),
 most recent first. Every new session and sub-agent should read this.
 
-## 2026-05-26 — M4 local Copilot review findings (applied)
+## 2026-05-26 — GitHub Copilot PR review (PR #6) findings (applied)
+GitHub Copilot DID post inline review comments on PR #6 (it works — just slower than the local CLI). Fixes:
+- **Regenerate-after-edit regression (real bug Copilot surfaced)**: firing `runColumns([idx])` from an effect watching `aiColumns` is fragile — React Query **structural sharing** keeps the same array reference after an optimistic update + identical server payload, so the effect never re-fires and the column never regenerates. Fix: call `runColumns([idx])` **directly in the mutation `onSuccess`** (the column already exists server-side and in cache via `setQueryData`). Removed the `pendingRegenRef` effect entirely. Bonus: regeneration is now instant (e2e dropped from ~1.2min to ~18s).
+- **Editor closes on failure**: `handleEditorSubmit` closed the drawer unconditionally; now closes only in `onSuccess` (keeps input on validation error) + an `onError` toast.
+- **Client-side validation** in `ColumnEditor` (name required; enum needs ≥1 value; json_path required) disables Save + shows a message — prevents a 422 round-trip.
+- **Auto-generate timer cleanup** on drawer close/unmount (was only cleared on re-click).
+- **`cellKey()` helper** used instead of duplicating the `${rowId}:${columnIndex}` template.
+- **`selection.ts` `ranges`** given an explicit type (was `any[]` under strict).
+- **Extractor ready-skip** query scoped to `$columnIndexes` when provided (don't pluck the whole row).
+
+## 2026-05-26 — PR #1–#5 user-review fixes (applied)
+User did a deep review of the first 5 merged PRs. Fixes applied (on the M5 branch → main):
+- **Docs**: removed the inaccurate GraphQL `requestReviewsByLogin` claim from the reference-repo note in LESSON (the REST method is the only one that works); AGENTS local-review command no longer uses inline `$(git diff)` (arg-overflow) — it writes `.review-diff.patch` and Copilot reads it. (SKILL/plan/AGENTS GraphQL refs were already fixed earlier on this branch.)
+- **`workflows` UNIQUE (tenant_id, preset_key)**: added (was only an index). `BuiltinWorkflowSeeder` already keys `updateOrCreate` on (tenant_id, preset_key) so no collision; `WorkflowFactory.preset_key` defaulted to `null` (NULLs distinct) so factory rows never collide.
+- **`force` is now functional** (was a documented no-op): `extractRow($force)` skips cells already `ready` unless forced; `StreamController` reads `?force=1` (the UI always sends it for Run all / regenerate) and passes it through.
+- **TopChrome a11y**: replaced fake `href="#"` nav links with `<button aria-disabled>` inside a `<nav>`.
+- **Client typing debt**: `addColumn/updateColumn/deleteColumn` now typed `Promise<ReviewResponse>` (they return the full re-hydrated payload, incl. delete — not `void`); mutation hooks use an explicit `RollbackCtx` 4th generic (no more `context as …` cast) and `onSuccess` seeds the cache from the returned payload; `TabularPage` derives the new column index from the returned review (`lastColumnIndex`), not a stale local count.
+- **Process**: the "merge without CI/Copilot" anomaly is fixed by the strict gate added this milestone (CI green + Copilot reviewed + zero open comments before merge).
+
+## 2026-05-26 — CI (first real run) gotchas
+- **phpunit before build → ViteManifestNotFoundException**: a feature test hitting `/` renders `app.blade.php` (`@vite()`), which needs `public/build/manifest.json`. CI runs phpunit before `npm run build` → 500. Fix: `$this->withoutVite()` in any view-rendering feature test (don't depend on built assets). Verified by removing `public/build` locally.
+- **`npm ci` fails on Linux CI with a Windows-generated lockfile**: "Missing: @emnapi/core@… from lock file" — the lockfile (npm 11, Windows) omits Linux-only optional native deps (transitive of Vite 8 / rolldown). Fix: use `npm install --no-audit --no-fund` in CI instead of `npm ci`. (Reference repo hit similar npm/lockfile cross-version issues.)
+- CI triggers on both `pull_request` and `push` → two runs per PR; both must be green.
+
+## 2026-05-26 — M5 interactions local review findings (applied)
+
+- **`ColumnEditor` missing Escape handler + initial focus**: `role="dialog" aria-modal="true"` without an Escape listener is an ARIA violation. Fixed: added `useEffect` on `[open, onClose]` that attaches/removes a `keydown → Escape → onClose()` handler. Also added `autoFocus` on the Label input so focus lands inside the drawer on open.
+- **`CellSidePanel` missing Escape handler**: `<aside>` panels should close on Escape. Fixed: same `useEffect` pattern on `[open, selection, onClose]`.
+- **`autoGenerate` setTimeout not cancelled on re-click**: If the user clicks "Auto-generate" twice quickly, two overlapping timers ran (second would overwrite first). Fixed: store the timer ID in a `useRef<number | null>` and `clearTimeout` before scheduling a new one.
+- **`window.setTimeout` return type vs Node `Timeout`**: `autogenTimerRef` initially typed as `ReturnType<typeof window.setTimeout>` which TypeScript (with `"types": ["node"]` in tsconfig) resolves to `NodeJS.Timeout` instead of `number`. Fix: type as `number | null` explicitly. Note: the tsconfig `"types": [...]` array includes `"node"`, which shadows the browser `setTimeout` return type for `ReturnType<typeof window.setTimeout>` in ambiguous contexts.
+- **`React.CSSProperties` in `AiSuggestPopover` without React import** — Works at runtime (and typecheck passes) because `@types/react` is a transitive dependency and TypeScript resolves the `React` namespace. But it is fragile and relies on ambient injection. Marked as risky (no change needed now; watch for `isolatedModules` stricter enforcement).
+- **`pendingRegenRef` index prediction after deletes (risky — not applied)**: `newIndex = aiColumns.length` is correct only when the server assigns `column_index` equal to the current count (no gaps from prior deletes). If the server ever reuses indices or skips, the effect would wait forever. For the demo (no concurrent add+delete sequences), this is safe. Verify `ColumnController::store` always appends at `count(ai_columns)`.
+- **`pendingRegenRef` single-slot race (risky — not applied)**: Two rapid add-column mutations would overwrite the ref; only the second column would auto-regenerate. Acceptable for the demo; a queue would be needed for production.
+
+
 - **`drawPercentage` — zero-width fill bar path**: when `pct = 0` (null value or explicit 0), `roundRect` was called with `w = 0` → degenerate path drawn to canvas (harmless but invalid). Fixed: guard `if (pct > 0)` before drawing the fill bar.
 - **`drawJsonPath` — unused `theme` destructuring + `void theme` suppression**: `theme` was extracted from `d` but never used directly (it flows through `{ ...d }` to sub-renderers). Removed the destructure; `void theme` suppression no longer needed.
 - **Citation registry clear: `useEffect` (async) vs. render-time (sync)**: using `useEffect` to clear the `CitationRegistry` on preset change means the registry is cleared AFTER the first render with the new preset, potentially assigning citation indices starting from the old `next` counter rather than 1. Fixed: replaced `useEffect` with a render-phase previous-value comparison (`prevPresetRef`) so the registry is cleared synchronously before `getCellContent` is called for the new preset. Removed the now-unused `useEffect` import from `AgenticGrid.tsx`.
@@ -79,7 +113,7 @@ See `docs/plan.md §1.A` for the full annotated list (findings 1–9 with task a
 ### Reference repo process gotchas (`product_image_discovery_admin/docs/LESSON.md`)
 - Windows: `php`/`composer` may be off PATH; Herd PHP at `%USERPROFILE%\.config\herd\bin\php84\php.exe`; set `PHP_BINARY`. Don't use XAMPP.
 - Creating `.agents/skills/` was sandbox-blocked there; they used a repo-local `skills/` dir. We use `.claude/skills/` and fall back to `skills/` if blocked.
-- Copilot reviewer request can fail before requesting if token lacks `read:project` → GraphQL `requestReviewsByLogin` fallback.
+- Copilot reviewer request: the reference repo claimed a GraphQL `requestReviewsByLogin` fallback — that was INACCURATE (no such mutation). The working method is the REST `requested_reviewers` endpoint (see the verified entry below).
 - Vite/Vitest on Windows: `spawn EPERM` issues fixed by recent Vite/Vitest; use `pool: 'threads'` (forks still spawned child processes).
 - CI must make demo data deterministic (fake providers / mock LLM) — our Mock mode is the determinism lever for Playwright.
 
@@ -95,10 +129,13 @@ See `docs/plan.md §1.A` for the full annotated list (findings 1–9 with task a
 - ❌ There is no `requestReviewsByLogin` GraphQL mutation (the reference repo's note was inaccurate). Use the REST endpoint above.
 - Verify with `gh pr view <PR> --json reviewRequests`.
 
-### GitHub Copilot PR review is NOT serviced on this repo (blocker → policy)
-- On PR #1 the REST request returns `Copilot` (accepted) but `reviewRequests` empties **immediately** and **no review is ever posted** (waited 12+ min). The bot is added then instantly dropped → GitHub "Copilot code review" is not enabled / not entitled for `lopadova/spreadsheet-ai`.
-- **Adopted policy (bounded wait):** still fire the REST request on every PR (cheap), but wait at most ~3–5 min. If no Copilot review materializes, treat the **local Copilot `/review` + green local tests** as the binding review gate, record it in PROGRESS, and proceed. Do NOT deadlock the roadmap on an unavailable external feature.
-- To enable later: the repo owner can turn on Copilot code review in repo/org settings (needs a Copilot subscription that includes automated PR review). Once enabled, the GitHub-side gate becomes real again.
+### GitHub Copilot PR review — slow/intermittent, NOT "unavailable" (bounded-wait policy REVOKED)
+- PR #1 looked unavailable (request cleared, no review), but PR #3 later DID show a review → Copilot review **is** serviced, just **slow/intermittent**, can take minutes; an early empty `reviewRequests` does not mean "never".
+- **CORRECTED POLICY (user directive 2026-05-26):** the "bounded-wait, merge anyway" policy is **REVOKED**. Merge ONLY when **GitHub Actions CI is green AND a Copilot review has actually posted with zero unresolved comments**. Poll for minutes; re-request via REST if needed; never merge early.
+- REST request method correct: `gh api --method POST repos/<owner>/<repo>/pulls/<PR>/requested_reviewers -f 'reviewers[]=copilot-pull-request-reviewer[bot]'`; `gh pr edit --add-reviewer @copilot` is a silent no-op.
+
+### DEBT: PRs #2–#5 merged before CI existed + without waiting for Copilot
+- CI (`.github/workflows/ci.yml`) was added at M5 (brought forward from M7). PRs #2–#5 (M1–M4) merged with only LOCAL gates + local Copilot review, without waiting for GitHub Copilot. `main` is locally green; CI validates it from M5 on. Strict CI+Copilot gate applies from M5 onward.
 
 ### Repo license mismatch (TODO M7)
 - The GitHub repo was initialized with **Apache-2.0** (`LICENSE`), but the article/README badges say **MIT**. Decide in M7: align README badges to Apache-2.0, or relicense to MIT. Don't claim MIT in the README until resolved.

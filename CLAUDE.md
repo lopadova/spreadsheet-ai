@@ -17,7 +17,7 @@ flag + citation. Laravel 13 + React/Vite/Tailwind + Glide Data Grid + `laravel/a
 ## How to work here
 - Read on every session: `AGENTS.md`, `docs/plan.md`, `docs/PROGRESS.md`, `docs/LESSON.md`, `docs/RULES.md`.
 - Branch per macro task; subtask PRs into the macro branch; macro PR into `main`.
-- A task is done only when phpunit + vitest + vite build (+ Playwright for UI) are green, a PR is open, Copilot review ran, CI + Copilot are green, then merge. Loop on failures.
+- A task is done only when: local gates green → local Copilot `/review` clean → PR open → **GitHub Actions CI green** AND **Copilot review posted with zero open comments** → merge. **Never merge while CI is pending/red or Copilot hasn't reviewed / has comments.** Loop on failures. (CI = `.github/workflows/ci.yml`.)
 - Update `docs/PROGRESS.md` after meaningful work; update `docs/LESSON.md` on any non-obvious learning (including Copilot feedback).
 
 ## Conventions

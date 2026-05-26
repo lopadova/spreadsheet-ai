@@ -1,0 +1,87 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main, 'task/**']
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      LARAVEL_BYPASS_ENV_CHECK: '1'
+      TABULAR_AI_MOCK: 'true'
+      TABULAR_SSE_PACING_MS: '0'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup PHP 8.4
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: mbstring, sqlite3, pdo_sqlite, intl, fileinfo
+          coverage: none
+
+      - name: Setup Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Composer install
+        run: composer install --no-interaction --prefer-dist --no-progress
+
+      - name: composer validate
+        run: composer validate --strict
+
+      - name: Prepare app env (SQLite)
+        run: |
+          cp .env.example .env
+          touch database/database.sqlite
+          php artisan key:generate
+          php artisan migrate:fresh --seed --no-interaction
+
+      - name: PHPUnit
+        run: vendor/bin/phpunit
+
+      - name: npm install
+        # `npm ci` is intentionally avoided: the lockfile is generated on
+        # Windows (dev) and omits Linux-only optional native deps (e.g.
+        # @emnapi/core, a transitive of Vite 8 / rolldown bindings), which
+        # makes `npm ci` fail with "Missing ... from lock file" on Linux CI.
+        # `npm install` resolves the correct per-platform optional deps.
+        run: npm install --no-audit --no-fund
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Vitest
+        run: npm run test
+
+      - name: Vite build
+        run: npm run build
+
+      - name: Install Playwright (chromium)
+        run: npx playwright install --with-deps chromium
+
+      - name: Re-seed for a clean e2e baseline
+        run: php artisan migrate:fresh --seed --no-interaction
+
+      - name: Playwright e2e
+        run: npm run e2e
+
+      - name: Upload Playwright report on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: |
+            playwright-report
+            test-results
+          retention-days: 7
+          if-no-files-found: ignore
