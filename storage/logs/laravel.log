@@ -1,5 +1,0 @@
-[2026-05-26 12:40:12] testing.WARNING: TabularAiClient provider call failed {"message":"SECRET_HOST api.internal.example.com KEY sk-leak-123","exception":"RuntimeException"} 
-[2026-05-26 12:40:22] testing.WARNING: TabularAiClient provider call failed {"message":"SECRET_HOST api.internal.example.com KEY sk-leak-123","exception":"RuntimeException"} 
-[2026-05-26 12:40:33] testing.WARNING: TabularAiClient provider call failed {"message":"SECRET_HOST api.internal.example.com KEY sk-leak-123","exception":"RuntimeException"} 
-[2026-05-26 12:40:35] testing.WARNING: TabularAiClient provider call failed {"message":"SECRET_HOST api.internal.example.com KEY sk-leak-123","exception":"RuntimeException"} 
-[2026-05-26 12:41:24] testing.WARNING: TabularAiClient provider call failed {"message":"SECRET_HOST api.internal.example.com KEY sk-leak-123","exception":"RuntimeException"} 

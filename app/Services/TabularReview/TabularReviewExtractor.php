@@ -187,6 +187,8 @@ class TabularReviewExtractor
      * Convenience iterator: extract every row of the review's preset.
      *
      * @param  list<int>|null  $columnIndexes
+     * @param  bool  $force  Reserved for a future "skip READY cells" optimisation.
+     *                        Currently a no-op: the atomic upsert always overwrites.
      * @return list<TabularCell>
      */
     public function extractReview(
@@ -460,7 +462,8 @@ class TabularReviewExtractor
                 'reasoning' => 'Extracted content failed JSON encoding.',
                 'citations' => [],
             ];
-            $encoded = json_encode($content, JSON_UNESCAPED_UNICODE);
+            // Fallback content is hardcoded primitives — encode cannot fail.
+            $encoded = json_encode($content, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE);
             $status = CellStatus::FAILED;
             $flag = CellFlag::RED;
         }

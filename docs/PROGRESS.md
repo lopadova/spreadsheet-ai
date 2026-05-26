@@ -20,6 +20,17 @@ Live "where am I" log. Newest first. Resume from the top after any interruption.
 - Gates green: composer validate, migrate+seed, **phpunit 25/198**, typecheck, vitest, build, e2e. Built by 2 parallel sub-agents (disjoint scopes), integrated + local-Copilot-reviewed by integrator.
 - GitHub Copilot review again not serviced → merged under bounded-wait policy.
 
+### M2 local Copilot review outcome (2026-05-26)
+- Full diff `.review-diff.patch` reviewed. 6 issues found and fixed:
+  1. `JsonPathResolver::stringifyValue` — removed dead `=== false` branch (unreachable after `JSON_THROW_ON_ERROR`).
+  2. `TabularReviewExtractor::persistCell` fallback — added `JSON_THROW_ON_ERROR` to the degraded `json_encode` call for consistency.
+  3. `ColumnRequest` — added `'min:1'` to `enum_values` rule; prevents a silent empty-array enum column.
+  4. `StreamController` catch block — was emitting ONE red cell (`$columnIndexes[0] ?? 0`) instead of one per affected column; fixed to fan out over all column indexes.
+  5. `StreamController::emit()` — guard `json_encode` returning `false` (skip event rather than emit `data: false`).
+  6. `StreamController` catch — added `Log::warning` so unexpected row-level throws are visible in the log.
+  7. `TabularReviewExtractor::extractReview` — documented the `$force` parameter as reserved/no-op.
+- All 162 tests green after fixes.
+
 ### Next
 - **M2 — Backend Tabular engine** (in progress): FormatType/CellFlag/CellStatus enums, RowContextBuilder, JsonPathResolver, TabularReviewExtractor (batched laravel/ai + Mock from PresetData), FlagClassifier, REST API + FormRequests, synchronous SSE stream. PHPUnit guardrails. (Pure backend → no Playwright.)
 

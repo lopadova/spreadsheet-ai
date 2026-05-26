@@ -14,7 +14,7 @@ use Illuminate\Validation\Rule;
  *  - name        required string
  *  - format      required, ∈ FormatType::values()
  *  - prompt      optional string
- *  - enum_values required (non-empty list) iff format = enum
+ *  - enum_values required (non-empty array, min 1 item) iff format = enum
  *  - json_path   required iff format = json_path
  */
 class ColumnRequest extends FormRequest
@@ -35,6 +35,7 @@ class ColumnRequest extends FormRequest
             'prompt' => ['nullable', 'string', 'max:2000'],
             'enum_values' => [
                 'array',
+                'min:1',
                 Rule::requiredIf(fn () => $this->input('format') === FormatType::ENUM->value),
             ],
             'enum_values.*' => ['string', 'max:120'],

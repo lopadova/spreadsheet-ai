@@ -12,6 +12,7 @@ use App\Support\TabularReview\CellFlag;
 use App\Support\TabularReview\CellStatus;
 use App\Support\TabularReview\PresetData;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
@@ -64,20 +65,30 @@ class StreamController extends Controller
                 try {
                     $this->extractor->extractRow($review, $row, $rowIndex, $rowId, $onCell, $columnIndexes);
                 } catch (\Throwable $e) {
-                    // Never 500 mid-stream — emit a red cell event for the row.
-                    $this->emit('cell', [
+                    // Never 500 mid-stream — emit a red cell for EVERY affected column
+                    // so the client is never stuck waiting for a cell event that won't arrive.
+                    Log::warning('StreamController row extraction threw', [
+                        'review_id' => $review->id,
                         'row_id' => $rowId,
-                        'column_index' => $columnIndexes[0] ?? 0,
-                        'content' => [
-                            'summary' => null,
-                            'flag' => CellFlag::RED->value,
-                            'reasoning' => 'Row extraction failed.',
-                            'citations' => [],
-                        ],
-                        'flag' => CellFlag::RED->value,
-                        'confidence' => 0.20,
-                        'status' => CellStatus::FAILED->value,
+                        'exception' => $e::class,
                     ]);
+
+                    $errorIndexes = $columnIndexes ?? array_keys(array_values($review->columns_config ?? []));
+                    foreach ($errorIndexes ?: [0] as $colIdx) {
+                        $this->emit('cell', [
+                            'row_id' => $rowId,
+                            'column_index' => $colIdx,
+                            'content' => [
+                                'summary' => null,
+                                'flag' => CellFlag::RED->value,
+                                'reasoning' => 'Row extraction failed.',
+                                'citations' => [],
+                            ],
+                            'flag' => CellFlag::RED->value,
+                            'confidence' => 0.20,
+                            'status' => CellStatus::FAILED->value,
+                        ]);
+                    }
                 }
             }
 
@@ -95,8 +106,14 @@ class StreamController extends Controller
      */
     private function emit(string $event, array $data): void
     {
+        $json = json_encode($data, JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_SUBSTITUTE);
+
+        if ($json === false) {
+            return; // Un-encodable payload — skip rather than corrupt the stream.
+        }
+
         echo 'event: '.$event."\n";
-        echo 'data: '.json_encode($data, JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_SUBSTITUTE)."\n\n";
+        echo 'data: '.$json."\n\n";
 
         if (function_exists('ob_get_level') && ob_get_level() > 0) {
             @ob_flush();
