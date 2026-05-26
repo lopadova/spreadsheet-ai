@@ -9,7 +9,11 @@ const baseURL = `http://127.0.0.1:${PORT}`;
 // `artisan serve` on 127.0.0.1:8123 but does not seed for you.
 export default defineConfig({
     testDir: './tests/e2e',
-    fullyParallel: true,
+    // SSE streams block the single `artisan serve` PHP worker for the duration
+    // of a generation run; concurrent specs would starve that worker. Serialise
+    // (one worker) so each test's stream owns the worker. Cheap for a demo.
+    fullyParallel: false,
+    workers: 1,
     forbidOnly: !!process.env.CI,
     retries: process.env.CI ? 1 : 0,
     reporter: 'list',

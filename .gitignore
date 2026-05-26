@@ -36,3 +36,6 @@ yarn-error.log
 /playwright/.cache
 .DS_Store
 Thumbs.db
+
+# Playwright MCP scratch
+.playwright-mcp/

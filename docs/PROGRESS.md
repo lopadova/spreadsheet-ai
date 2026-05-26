@@ -36,7 +36,12 @@ Live "where am I" log. Newest first. Resume from the top after any interruption.
 - **API contract**: `GET /api/reviews/{preset}` → `{review:{id,preset_key,title,row_source}, base_columns:[{id,name}], columns:[{index,name,prompt,format,enum_values?,json_path?}], rows:[{row_id,...displayFields}], cells:[{row_id,column_index,content,flag,confidence,status}], suggestions_available}`. `GET /api/suggest/{preset}` → `{preset, suggestions:[{name,format,prompt,enum_values?}]}`. Column CRUD: POST/PATCH/DELETE `/api/reviews/{id}/columns[/{index}]`. SSE: `GET /api/reviews/{id}/stream?cols=&force=`.
 - **TODO (M4)**: `base_columns` only returns `{id,name}` — width/align/mono lost vs prototype. Enrich the API (small backend tweak) or default widths client-side in M4.
 
+### M3 outcome (2026-05-26) — MERGED (PR #4)
+- React 19 page shell: CSRF API client, TanStack Query hooks (useReview seeds cell store), cell store keyed row:col, components TopChrome/Hero/PresetChips/ActionBar/StatusFooter/GridPlaceholder/Toast/TabularPage. Vitest 30, e2e 3/3, typecheck+build clean. Local Copilot review applied. base_columns lacks width (M4 assigns).
+
 ### Next
+- **M4 — Glide Data Grid + 17 renderers + SSE consumer** (in progress): replace GridPlaceholder with @glideapps/glide-data-grid canvas; 17 custom cell renderers (fix prototype bugs: RJsonPath auto-detect, stable citation numbering, percentage NaN guard, url protocol); confidence dot + citation badge + flag tint; skeleton(Loading)+progress; single EventSource → atomic updateCells; run-token guard on preset switch; Run all/Stop. Vitest + Playwright.
+
 - **M3 — Frontend shell + page composition** (in progress): TopChrome, HeroBanner (stats), PresetChips, ActionBar (AI Suggest, Add column, Live/Mock toggle, Export, Share, Run all), StatusFooter; TanStack Query client + hooks on the M2 contract; cell store; placeholder grid region (real Glide grid = M4). Vitest + Playwright.
 
 ### Blockers

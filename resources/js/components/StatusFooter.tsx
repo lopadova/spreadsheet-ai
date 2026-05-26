@@ -1,5 +1,6 @@
 import type { Cell } from '../api/client';
 import type { PresetMeta } from '../lib/presets';
+import { citationText } from '../grid/format';
 
 interface StatusFooterProps {
     preset: PresetMeta;
@@ -30,9 +31,7 @@ function dotColor(flag: string | null): string {
 function deriveCitations(cells: ReadonlyMap<string, Cell>): CitationChip[] {
     const out: CitationChip[] = [];
     for (const [key, cell] of cells) {
-        const citations = cell.content?.citations;
-        const first = Array.isArray(citations) ? citations[0] : citations;
-        const text = typeof first === 'string' ? first : first != null ? String(first) : '';
+        const text = citationText(cell.content?.citations);
         if (text) {
             out.push({ key, flag: cell.flag, text });
             if (out.length >= 4) break;

@@ -830,7 +830,43 @@ button {
     flex-shrink: 0;
 }
 
-/* ============== Grid placeholder (M4 replaces with Glide) ============== */
+/* ============== Glide grid (M4) ============== */
+.agentic-grid-wrap {
+    flex: 1;
+    min-height: 280px;
+    background: var(--bg-elevated);
+    border-bottom: 1px solid var(--border);
+    position: relative;
+}
+.agentic-grid {
+    /* Glide injects --gdg-* CSS vars; the `theme` prop drives colors. */
+    border-radius: 0;
+}
+.agentic-grid .dvn-scroller {
+    border-radius: 0;
+}
+.agentic-grid-skeleton {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 16px 24px;
+}
+
+/* Visually-hidden but screen-reader-available mirror table. Tests + a11y read
+   cell values from here since the canvas text is not queryable. */
+.grid-mirror {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+/* ============== Grid placeholder (legacy, kept for reference) ============== */
 .grid-placeholder {
     background: var(--bg-elevated);
     border-bottom: 1px solid var(--border);
