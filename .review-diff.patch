@@ -1,0 +1,544 @@
+diff --git a/.claude/skills/spreadsheet-ai-plan/SKILL.md b/.claude/skills/spreadsheet-ai-plan/SKILL.md
+new file mode 100644
+index 0000000..245572e
+--- /dev/null
++++ b/.claude/skills/spreadsheet-ai-plan/SKILL.md
+@@ -0,0 +1,51 @@
++---
++name: spreadsheet-ai-plan
++description: Resume or continue the spreadsheet-ai Tabular Review demo (Laravel 13 + React/Vite/Tailwind + Glide Data Grid + laravel/ai). Use when working in the spreadsheet-ai repo, when context was lost, when following the saved plan, or when enforcing the branch/PR/Copilot-review/testing/security/UI rules for this project.
++---
++
++# spreadsheet-ai — resume skill
++
++You are building a **functioning single-page demo of an agentic spreadsheet**
++("Tabular Review"): rows = e-commerce entities, columns = LLM prompts, cells =
++AI values with confidence flag + citation. Stack: Laravel 13 + SQLite +
++`laravel/ai`, React 19 + Vite + Tailwind v4 + Glide Data Grid, synchronous SSE,
++Mock-default + Live LLM toggle.
++
++## Start here (read in order, every time)
++1. `AGENTS.md` — operating instructions + the branch/PR/Copilot loop.
++2. `docs/plan.md` — canonical plan, deep analysis (§1), task breakdown (§3, M0–M7).
++3. `docs/PROGRESS.md` — where the last session stopped; resume from the top.
++4. `docs/LESSON.md` — non-obvious facts/fixes (incl. `laravel/ai` option-forwarding gotcha, extractor upsert race, prototype renderer bugs).
++5. `docs/RULES.md` — binding implementation/security/testing/review/UI rules.
++
++## External references (read, don't re-derive)
++- Article: `%USERPROFILE%\Downloads\medium\SpreadsheetAi\article-bozza-italiano.md`
++- Design prototype (pixel reference + presets + 17 renderers + CSS tokens): `%USERPROFILE%\Downloads\SpreadsheetAi\tabular-review-demo\project\`
++- Backend patterns to copy: `%USERPROFILE%\Documents\DocLore\Visual Basic\Ai\AskMyDocs`
++- Governance template: `%USERPROFILE%\Documents\DocLore\Visual Basic\Ai\product_image_discovery_admin`
++- Screenshots for README: `resources/Tabular-Review-Banner.png`, `…-Ai-suggested.png`, `…-Prompt-Column.png`
++
++## Procedure
++1. Read current state (above). Scope to the current macro task / subtask from `docs/plan.md` §3.
++2. Implement on a branch (`task/m{N}-{slug}`); subtasks PR into the macro branch.
++3. Define guardrails as tests up front: PHPUnit (backend), Vitest (frontend), and Playwright scenarios for **every** UI/UX interaction.
++4. Definition of Done — in order, loop until green:
++   a. **Local tests** green (phpunit, vitest, vite build, Playwright for UI).
++   b. **Local Copilot review** (before push): `copilot --autopilot --yolo -p "/review <full diff> ..."` passing the COMPLETE diff `git diff origin/main...HEAD` and asking for regressions/bugs/bad-practices/security/improvements; fix + re-run + loop until clean.
++   c. Push → open PR → request **GitHub Copilot** review (confirm started; GraphQL `requestReviewsByLogin` fallback).
++   d. Wait for CI **and** Copilot → fix broken tests + comments → re-push/re-request → merge only when all green.
++5. After each meaningful step: update `docs/PROGRESS.md`. On any non-obvious learning (incl. Copilot feedback): update `docs/LESSON.md`.
++
++## Macro task order
++M0 governance (done first) → M1 Laravel foundation + DB + seeders + ai config →
++M2 backend engine (FormatType, extractor, json_path, SSE) → M3 frontend shell →
++M4 Glide grid + 17 renderers + SSE consumer → M5 column editor + AI Suggest +
++bulk + citation panel → M6 presets/workflows/polish/export → M7 CI + WOW README +
++knowledge consolidation + tag `v0.1.0` & GitHub release.
++
++## Hard rules (quick)
++- Controllers use `config()`, never `env()`. Never leak provider errors/secrets.
++- Atomic cell upsert keyed `(review_id,row_id,column_index)`; encode JSON with `JSON_THROW_ON_ERROR | JSON_INVALID_UTF8_SUBSTITUTE`, degrade to red on failure.
++- `url` cells: `http:`/`https:` only. CSV export: neutralize `= + - @`.
++- Windows/Herd PHP 8.4, not XAMPP; phpunit via `npm run phpunit` wrapper. Vitest `pool: threads`.
++- Final task: fold `docs/LESSON.md` into rules/skills/AGENTS.md/CLAUDE.md before tagging the release.
+diff --git a/AGENTS.md b/AGENTS.md
+new file mode 100644
+index 0000000..7ab14bb
+--- /dev/null
++++ b/AGENTS.md
+@@ -0,0 +1,68 @@
++# AGENTS.md — spreadsheet-ai (Tabular Review demo)
++
++Operating instructions for any AI agent (Claude / Copilot / sub-agents) working
++in this repository. Read this fully before acting. Then read, in order:
++`docs/plan.md`, `docs/PROGRESS.md`, `docs/LESSON.md`, `docs/RULES.md`.
++
++## Project identity
++A functioning single-page demo of an **agentic spreadsheet** ("Tabular Review"):
++rows = e-commerce entities, columns = LLM prompts, cells = AI values with
++confidence flag + citation. Laravel 13 + React/Vite/Tailwind + Glide Data Grid,
++LLM via the `laravel/ai` SDK. See `docs/plan.md` §0 for the full brief and the
++three locked architecture decisions (SQLite · synchronous SSE no-Redis · Mock
++default + Live toggle).
++
++## Required context files (every session, every sub-agent)
++- `docs/plan.md` — canonical plan + deep analysis + task breakdown.
++- `docs/PROGRESS.md` — live "where am I" log. Update after meaningful work.
++- `docs/LESSON.md` — non-obvious facts / fixes. Update whenever you learn one (including from Copilot feedback).
++- `docs/RULES.md` — binding implementation/security/testing/review rules.
++
++## Reference sources (do not re-derive — read them)
++- Article: `%USERPROFILE%\Downloads\medium\SpreadsheetAi\article-bozza-italiano.md`
++- Design prototype (pixel reference): `%USERPROFILE%\Downloads\SpreadsheetAi\tabular-review-demo\project\`
++- Backend patterns to copy: `%USERPROFILE%\Documents\DocLore\Visual Basic\Ai\AskMyDocs` (`app/Support/TabularReview/FormatType.php`, `app/Services/TabularReview/TabularReviewExtractor.php`, `app/Ai/AiManager.php`).
++- Governance template: `%USERPROFILE%\Documents\DocLore\Visual Basic\Ai\product_image_discovery_admin`.
++
++## Branch & PR loop (mandatory)
++- One **branch per macro task** (`task/m1-foundation`, `task/m2-engine`, …). Subtasks branch off and PR **into the macro branch**; finished macro branch PRs **into `main`**.
++- **A (sub)task is DONE only when, in this order:**
++  1. **Local tests loop** — all green: `phpunit`, `vitest`, `vite build`, and — for any UI/UX work — **Playwright scenarios covering every interaction**. Fix until green.
++  2. **Local Copilot review loop** (BEFORE any push) — run the local Copilot CLI against the *complete* branch diff vs `origin/main`, fix everything it flags, re-run, loop until clean. See the exact command below.
++  3. Push the branch; open PR toward the working branch.
++  4. **GitHub Copilot** requested as reviewer and its review confirmed started.
++  5. **GitHub CI + Copilot loop** — wait for both CI green **and** Copilot comments; fix broken tests + comments, push, re-request Copilot review, loop until all green.
++  6. All green → merge. Only then move to the next task.
++- Pure-code tasks: PHPUnit/Vitest suffice. UI/UX tasks: Playwright is required too.
++
++### Local Copilot review (step 2 — before push)
++Run the Copilot CLI in autopilot and pass it the **full branch diff vs `origin/main`** as context, invoking the **`/review`** skill explicitly (do NOT rely on open files or just changed-branch files — give it the complete diff so it has context):
++
++```bash
++copilot --autopilot --yolo -p "/review the following COMPLETE diff of the current branch against origin/main. Check thoroughly for regressions, bugs, bad practices, security issues, and possible improvements, and report concrete fixes:
++
++$(git diff origin/main...HEAD)"
++```
++
++Fix every legitimate finding, re-run the local tests, re-run this local review, and loop until clean. Only then push. Record non-obvious findings in `docs/LESSON.md`.
++
++### Requesting GitHub Copilot review (step 4 — fallback)
++Prefer `gh pr edit <PR> --add-reviewer @copilot`. If the token lacks `read:project`
++this can fail before requesting — fall back to the GraphQL `requestReviewsByLogin`
++mutation with `botLogins: ["copilot-pull-request-reviewer[bot]"]` and `union: true`.
++Do NOT substitute `@codex review` unless the user explicitly asks.
++
++## Sub-agent strategy
++- Spawn sub-agents for disjoint write scopes (backend vs frontend). Hand each one `docs/LESSON.md` + `docs/plan.md` + this file in its prompt.
++- Keep one integrator agent responsible for the final gates and the merge.
++- Worker write scopes must not overlap.
++
++## Environment (Windows / Herd)
++- Use **Herd PHP** (`%USERPROFILE%\.config\herd\bin\php84\php.exe`), not XAMPP. Set `PHP_BINARY` if `php` is not on PATH.
++- Run the PHPUnit gate through an `npm run phpunit` wrapper (`scripts/run-php.mjs`) to avoid stale PATH / XAMPP resolution.
++- Vitest in CI: `pool: 'threads'`, `LARAVEL_BYPASS_ENV_CHECK=1`. Validate lockfiles with `npx npm@10 ci --dry-run`.
++- If a gate is blocked by sandbox/network, record the exact blocker in `docs/PROGRESS.md` — do not silently skip.
++
++## Final task
++After all macro tasks, fold `docs/LESSON.md` learnings back into `docs/RULES.md`,
++the skills, this file, and `CLAUDE.md`, then tag `v0.1.0` and cut the GitHub release.
+diff --git a/CLAUDE.md b/CLAUDE.md
+new file mode 100644
+index 0000000..d0fff74
+--- /dev/null
++++ b/CLAUDE.md
+@@ -0,0 +1,35 @@
++# CLAUDE.md — spreadsheet-ai
++
++Project memory for Claude Code. Keep concise. Authoritative process lives in
++`AGENTS.md` + `docs/RULES.md` + `docs/plan.md`; read those before working.
++
++## What this is
++A functioning single-page demo of an **agentic spreadsheet** (Tabular Review):
++rows = e-commerce entities, columns = LLM prompts, cells = AI values + confidence
++flag + citation. Laravel 13 + React/Vite/Tailwind + Glide Data Grid + `laravel/ai`.
++
++## Locked decisions
++- DB: **SQLite** (`database/database.sqlite`). Rows seeded from the 5 demo presets.
++- Streaming: **synchronous SSE, no Redis/Horizon**.
++- LLM: **Mock by default + Live toggle** (`laravel/ai`, Anthropic `claude-haiku-4.5`).
++- Pixel target: the rendered design in `resources/Tabular-Review-Banner.png` and the prototype in `%USERPROFILE%\Downloads\SpreadsheetAi\tabular-review-demo\project\`.
++
++## How to work here
++- Read on every session: `docs/plan.md`, `docs/PROGRESS.md`, `docs/LESSON.md`, `docs/RULES.md`, `AGENTS.md`.
++- Branch per macro task; subtask PRs into the macro branch; macro PR into `main`.
++- A task is done only when phpunit + vitest + vite build (+ Playwright for UI) are green, a PR is open, Copilot review ran, CI + Copilot are green, then merge. Loop on failures.
++- Update `docs/PROGRESS.md` after meaningful work; update `docs/LESSON.md` on any non-obvious learning (including Copilot feedback).
++
++## Conventions
++- Controllers read `config()`, never `env()`.
++- Never leak provider error messages / secrets in API responses or UI.
++- Cell content JSON-encoded with `JSON_THROW_ON_ERROR | JSON_INVALID_UTF8_SUBSTITUTE`; degrade to a red cell on failure.
++- Persist cells via atomic upsert keyed `(review_id, row_id, column_index)`.
++- `url` cells: only `http:`/`https:`; CSV export: neutralize `= + - @` formula prefixes.
++- Dense UI, radius ≤ 8px, no nested cards, every icon button has an aria-label/title.
++- Windows/Herd: use Herd PHP 8.4, not XAMPP; run phpunit via the `npm run phpunit` wrapper.
++
++## 17 column formats (single source of truth = `FormatType` enum)
++text · bulleted_list · number · percentage · monetary_amount · currency · yes_no ·
++date · tag · enum · enum_status · rating · url · person · tags_multi · relation ·
++json_path (LLM-free, resolves against the row JSON).
+diff --git a/docs/LESSON.md b/docs/LESSON.md
+new file mode 100644
+index 0000000..7394602
+--- /dev/null
++++ b/docs/LESSON.md
+@@ -0,0 +1,43 @@
++# LESSON.md — spreadsheet-ai
++
++Non-obvious facts, fixes, and gotchas. Append dated entries (`YYYY-MM-DD`),
++most recent first. Every new session and sub-agent should read this.
++
++## 2026-05-26 — Seeded from source analysis (before any code)
++
++### `laravel/ai` SDK surface (from AskMyDocs `app/Ai`)
++- Real classes: `Laravel\Ai\AnonymousAgent`, `Laravel\Ai\Messages\{UserMessage,AssistantMessage}`, `Laravel\Ai\Gateway\TextGenerationOptions::forAgent()`, response `Laravel\Ai\Responses\AgentResponse` (`->text`, `->usage->{promptTokens,completionTokens}`, `->meta->model`, `->steps->last()?->finishReason`).
++- **GOTCHA**: `TextGenerationOptions::forAgent()` reads `maxTokens()`/`temperature()` from the agent instance. A plain `AnonymousAgent` exposes neither, so caller-supplied `max_tokens`/`temperature` are silently dropped. AskMyDocs subclassed it (`RegoloAnonymousAgent`) to add the methods. → Verify our agent forwards options; add a faked-HTTP test asserting `max_tokens`/`temperature` reach the wire. If dropped, replicate the subclass trick.
++- AskMyDocs wraps everything in `App\Ai\AiManager` with `chat(string $system, string $user, array $options): AiResponse` and `chatStream(...)`. We can build a slimmer `AiManager` for the demo.
++
++### Extractor patterns worth copying (AskMyDocs `TabularReviewExtractor`)
++- Split columns into json_path (LLM-free) vs LLM batch. One batched call per row → newline-delimited JSON, one object per `column_index`.
++- Persist via `Model::upsert([...], uniqueBy: [...], update: [...])` then re-`first()` — `updateOrCreate` is NOT atomic and races on the composite UNIQUE.
++- Encode content with `JSON_THROW_ON_ERROR | JSON_INVALID_UTF8_SUBSTITUTE`; on `JsonException` degrade to a red cell (Postgres rejects invalid JSON; SQLite would store `""`).
++- Never put the provider exception message in the persisted/returned cell — log it, return "provider error". (Leaks hostnames/keys otherwise.)
++- `parseJsonPath` accepts `$.a.b`, `a.b`, and `$['a']['b']`; `descend()` walks arrays; booleans stringify to `"true"/"false"` (PHP `(string) false` is `""`, which loses the value).
++
++### Prototype bugs to fix when porting (`tabular-review-demo/project`)
++- `RJsonPath` renderer is a stub that always renders as percentage — must auto-detect type.
++- Citation numbering recomputed globally every render (O(rows×cols)) and unstable — make per-cell stable.
++- AI-Suggest fake cells use `{v}` shape while LLM path uses `{value,flag,citation}` — normalize on one DTO.
++- `RPercentage` parsing is fragile (`+18%`/`-42%`/bare) — centralize + guard `NaN` before color/width.
++- Preset switch mid-run can patch stale cells — add a run-token/abort guard.
++
++### Design tokens (`project/styles.css`)
++- Geist Sans + Geist Mono. Dark default. Accent violet (oklch). Status palette: success `#10b981`, paused/yellow `#f59e0b`, failed/red `#ef4444`, grey tertiary. Row height 40px, radii 4/6/8px. Reproduce in Tailwind v4 theme + a `tokens.css`.
++
++### Reference repo process gotchas (`product_image_discovery_admin/docs/LESSON.md`)
++- Windows: `php`/`composer` may be off PATH; Herd PHP at `%USERPROFILE%\.config\herd\bin\php84\php.exe`; set `PHP_BINARY`. Don't use XAMPP.
++- Creating `.agents/skills/` was sandbox-blocked there; they used a repo-local `skills/` dir. We use `.claude/skills/` and fall back to `skills/` if blocked.
++- Copilot reviewer request can fail before requesting if token lacks `read:project` → GraphQL `requestReviewsByLogin` fallback.
++- Vite/Vitest on Windows: `spawn EPERM` issues fixed by recent Vite/Vitest; use `pool: 'threads'` (forks still spawned child processes).
++- CI must make demo data deterministic (fake providers / mock LLM) — our Mock mode is the determinism lever for Playwright.
++
++### Review workflow (locked) — two-phase Copilot
++- **Phase 1, local (before push)**: `copilot --autopilot --yolo -p "/review <full diff> ..."`. Must pass the COMPLETE branch diff (`git diff origin/main...HEAD`) and invoke the `/review` skill explicitly — NOT just open files or changed-branch files, so Copilot has full context. Ask it for regressions, bugs, bad practices, security issues, improvements. Loop (fix → re-test → re-review) until clean.
++- **Phase 2, GitHub (after push/PR)**: request Copilot reviewer on the PR (GraphQL `requestReviewsByLogin` fallback), wait for CI + comments, loop.
++- Rationale (user, 2026-05-26): catch issues locally first → cheaper iterations, cleaner PRs.
++
++### Architecture decisions (locked)
++- SQLite, synchronous SSE (no Redis), Mock-default + Live toggle. Confirmed by user 2026-05-26. Rationale: zero-setup clonable demo.
+diff --git a/docs/PROGRESS.md b/docs/PROGRESS.md
+new file mode 100644
+index 0000000..0310210
+--- /dev/null
++++ b/docs/PROGRESS.md
+@@ -0,0 +1,23 @@
++# PROGRESS.md — spreadsheet-ai
++
++Live "where am I" log. Newest first. Resume from the top after any interruption.
++
++## 2026-05-26
++
++### Done
++- Analyzed all sources: article (`article-bozza-italiano.md`), design prototype (`tabular-review-demo/project/*`), AskMyDocs backend (`FormatType`, `TabularReviewExtractor`, `AiManager`, `laravel/ai` usage), and the governance template repo `product_image_discovery_admin`.
++- Confirmed 3 architecture decisions with the user: **SQLite**, **synchronous SSE (no Redis)**, **Mock default + Live toggle**.
++- Wrote `docs/plan.md` (deep analysis §1 + 8 macro tasks M0–M7 with sub-tasks, objectives, guardrails).
++- **M0 governance scaffolding created**: `AGENTS.md`, `CLAUDE.md`, `docs/RULES.md`, `docs/LESSON.md`, `docs/PROGRESS.md`, and the resume skill `.claude/skills/spreadsheet-ai-plan/SKILL.md`.
++- Catalogued screenshot assets in `resources/`: `Tabular-Review-Banner.png`, `Tabular-Review-Ai-suggested.png`, `Tabular-Review-Prompt-Column.png` (for the WOW README in M7.2).
++- User added requirement: final README must be a WOW community README (badges, banner, TOC, idea/intuition, innovation, MikeOSS credit, screenshots, junior-proof quickstart). Captured in plan M7.2.
++
++### Repo state
++- Only `LICENSE`, `README.md` (stub), plus the new `docs/`, `AGENTS.md`, `CLAUDE.md`, `.claude/` governance files. No Laravel app / frontend yet.
++
++### Next
++- **M0**: commit governance scaffolding; open `task/m0-governance` branch + PR; request Copilot review; merge when green.
++- Then **M1 — Laravel foundation**: scaffold Laravel 13 app, SQLite, `laravel/ai`, Blade+Vite shell, e-commerce schema + seeders, tabular schema. (See plan §3 M1.)
++
++### Blockers
++- None recorded yet. (Record exact blockers here if a gate is sandbox/network-blocked.)
+diff --git a/docs/RULES.md b/docs/RULES.md
+new file mode 100644
+index 0000000..478659c
+--- /dev/null
++++ b/docs/RULES.md
+@@ -0,0 +1,78 @@
++# Project Rules — spreadsheet-ai
++
++Binding rules. Adapted from `product_image_discovery_admin/docs/RULES.md`.
++
++## Source of truth
++- Canonical plan: `docs/plan.md`.
++- Live progress: `docs/PROGRESS.md`. Lessons: `docs/LESSON.md`.
++- Pixel/design reference: `%USERPROFILE%\Downloads\SpreadsheetAi\tabular-review-demo\project\` and `resources/Tabular-Review-Banner.png`.
++- Backend pattern reference: `%USERPROFILE%\Documents\DocLore\Visual Basic\Ai\AskMyDocs`.
++- Narrative/feature reference: `%USERPROFILE%\Downloads\medium\SpreadsheetAi\article-bozza-italiano.md`.
++
++## Implementation defaults
++- Laravel 13, PHP `^8.3`. SQLite (`database/database.sqlite`). Queue `sync`.
++- LLM via `laravel/ai` (`>=0.6,<0.6.8`). Default provider Anthropic, model `claude-haiku-4.5`. `AI_MOCK=true` by default.
++- Frontend: Blade shell + Vite + React 19 + Tailwind v4 + Glide Data Grid + TanStack Query.
++- API under `/api/...`. SSE stream is synchronous (no Redis/Horizon).
++- Rows are real e-commerce entities (returns/orders/articles/campaigns), seeded from the 5 presets.
++
++## Engine rules
++- 17 formats live in the `FormatType` enum — the single source of truth. Adding a format = new case + `promptSuffix()` + validator entry + cell renderer.
++- `json_path` is LLM-free: resolves against the serialized row JSON (`$.a.b`, `a.b`, `$['a']['b']`; booleans → "true"/"false"; missing → red refusal).
++- One batched LLM call per row → one JSON line per column. Mock mode returns cooked preset cells.
++- R14 refusal: no usable context → `{flag:red, summary:null}`, never an empty 200.
++- Persist cells with atomic DB upsert keyed `(review_id, row_id, column_index)`, then re-`first()`.
++- Encode cell content with `JSON_THROW_ON_ERROR | JSON_INVALID_UTF8_SUBSTITUTE`; degrade to red on failure.
++
++## Security rules
++- Never return provider error messages, API keys, secrets, or auth headers in JSON/UI. Log full server-side; return a generic "provider error" cell.
++- Controllers use `config()`, never `env()`.
++- `url`-format cells: validate `http:`/`https:` before any `window.open`.
++- CSV/any export: neutralize spreadsheet formula prefixes (`=`, `+`, `-`, `@`).
++- Demo seeders gate to `local`/`testing` environments.
++
++## UI rules
++- Single beautiful page. Dense layout, border radius ≤ 8px, no nested cards.
++- Glide canvas grid (not a DOM table). Skeleton/Loading cell while generating; top progress bar.
++- Every icon-only button needs an accessible label + tooltip.
++- No text overlap/overflow at desktop, narrow desktop, tablet, 125% and 150% zoom.
++- Confidence dot + citation badge + flag background tint per cell; guard `NaN` before any color/width math.
++
++## Testing rules
++Run the relevant subset before each PR:
++```
++composer validate --strict
++npm run phpunit        # Herd PHP wrapper, not XAMPP
++npm run test           # Vitest, pool: threads
++npm run build          # Vite
++npm run e2e            # Playwright (required for any UI/UX task)
++```
++- Pure-code tasks: PHPUnit/Vitest only. UI/UX tasks: Playwright scenarios for **every** interaction.
++- Playwright: exact label selectors; clean up created rows in `finally`; don't assume globally-unique rows under parallel projects.
++- Vitest CI: `LARAVEL_BYPASS_ENV_CHECK=1`; validate lockfile with `npx npm@10 ci --dry-run`.
++- If a tool is blocked (sandbox/network), record the exact blocker in `docs/PROGRESS.md`; do not silently skip.
++
++## Review rules (two-phase: local then GitHub)
++Order per (sub)task: local tests green → **local Copilot review loop** → push → PR → **GitHub Copilot review** → CI+comments loop → merge.
++
++### Phase 1 — Local Copilot review (before any push)
++- Run the Copilot CLI against the **complete branch diff vs `origin/main`**, invoking the `/review` skill explicitly (give it the full diff, not just open/changed files, so it has context):
++  ```bash
++  copilot --autopilot --yolo -p "/review the following COMPLETE diff of the current branch against origin/main. Check thoroughly for regressions, bugs, bad practices, security issues, and possible improvements, and report concrete fixes:
++
++  $(git diff origin/main...HEAD)"
++  ```
++- Fix every legitimate finding, re-run local tests, re-run the local review; loop until clean. Then push.
++
++### Phase 2 — GitHub Copilot review (after push/PR)
++- Request **GitHub Copilot** Code Review on every PR; confirm the review started.
++- Fallback if `gh pr edit <PR> --add-reviewer @copilot` fails (missing `read:project`): GraphQL `requestReviewsByLogin` with `botLogins: ["copilot-pull-request-reviewer[bot]"]`, `union: true`.
++- Do not use `@codex review` unless the user explicitly asks.
++- Fold Copilot learnings (local + GitHub) into `docs/LESSON.md`.
++
++## Documentation rules
++- Update `docs/PROGRESS.md` after meaningful work; `docs/LESSON.md` on non-obvious findings. Date entries `YYYY-MM-DD`.
++
++## Agent model rules
++- Sub-agents get disjoint write scopes. Hand each `docs/LESSON.md` + `docs/plan.md` + `AGENTS.md`.
++- Main agent stays integrator + final reviewer + merger.
+diff --git a/docs/plan.md b/docs/plan.md
+new file mode 100644
+index 0000000..a7d4c7a
+--- /dev/null
++++ b/docs/plan.md
+@@ -0,0 +1,204 @@
++# Spreadsheet-AI — Tabular Review Demo · Implementation Plan
++
++> Canonical, cross-session plan. If a session is interrupted, read this file +
++> `docs/PROGRESS.md` + `docs/LESSON.md` + `AGENTS.md` before doing anything.
++>
++> Last updated: 2026-05-26
++
++---
++
++## 0. What we are building
++
++A **functioning, beautiful single-page demo** of an *agentic spreadsheet*
++("Tabular Review" / "SpreadsheetAI"): rows are e-commerce entities, **each
++column is an LLM prompt**, each cell is an AI-generated value with a confidence
++flag + citation. Click a column → edit its prompt/format → regenerate. Preset
++chips launch cooked scenarios. An "✨ AI Suggest" button proposes columns.
++Cells stream in live (skeleton → value) cell-by-cell.
++
++Inspiration & sources (read these, do not re-derive):
++- Article (the narrative + the 7 laws + 17 formats): `%USERPROFILE%\Downloads\medium\SpreadsheetAi\article-bozza-italiano.md`
++- Design prototype (pixel reference, presets, renderers, CSS tokens): `%USERPROFILE%\Downloads\SpreadsheetAi\tabular-review-demo\project\`
++- Real production patterns to copy (backend): `%USERPROFILE%\Documents\DocLore\Visual Basic\Ai\AskMyDocs` (`app/Support/TabularReview/FormatType.php`, `app/Services/TabularReview/TabularReviewExtractor.php`, `app/Ai/AiManager.php`).
++- Governance scaffolding template: `%USERPROFILE%\Documents\DocLore\Visual Basic\Ai\product_image_discovery_admin` (`AGENTS.md`, `docs/RULES.md`, `docs/LESSON.md`, `docs/PROGRESS.md`, `skills/`, `.github/workflows/ci.yml`).
++
++### Confirmed architecture decisions (locked 2026-05-26)
++1. **DB = SQLite** (`database/database.sqlite`). Rows are e-commerce entities from seeders; no embeddings / pgvector needed (LLM context is the DB row itself, not RAG chunks).
++2. **Streaming = synchronous SSE, no Redis/Horizon.** The SSE endpoint iterates rows, calls the extractor, and echoes `cell` events as they land. Zero extra infra.
++3. **LLM = Mock mode by default + a Live toggle.** Mock returns the cooked preset cells (zero cost, works offline). Live calls real `laravel/ai` (Anthropic `claude-haiku-4.5` default, provider configurable). Demo runs out-of-the-box with no API key.
++
++### Stack
++- Backend: **Laravel 13**, PHP `^8.3`, SQLite, `laravel/ai` (`>=0.6,<0.6.8`), queue `sync`.
++- Frontend: **React 19 + Vite (latest) + Tailwind v4** + **@glideapps/glide-data-grid** (canvas) + **TanStack Query**. Served via a Blade shell + Vite (same pattern as the reference admin repo).
++- Tests: **PHPUnit** (backend), **Vitest** (frontend units), **Playwright** (UI/UX scenarios — mandatory for every interactive feature).
++- Design tokens: Geist Sans / Geist Mono, dark default, violet accent, oklch status palette (lifted from `project/styles.css`).
++
++### Out of scope for the demo (note, do NOT build)
++Multi-tenant RBAC, Spatie permissions, real RAG/pgvector ingestion, Redis/Horizon, real citation-to-source-doc viewer, human-verified lock + audit log, XLSX export (stub it), workflow sharing. We keep a single light `tenant_id='demo'` string column on tabular tables only for fidelity, with no auth.
++
++---
++
++## 1. Deep analysis — bugs, risks, gaps, improvements found in the sources
++
++Findings from auditing the prototype (`project/*.jsx`), the article, and the
++AskMyDocs code. These become guardrails or backlog items in the tasks below.
++
++### A. Prototype bugs / weaknesses to FIX when porting
++1. **`RJsonPath` renderer is a stub** (`cells.jsx`): it ignores the detected type and always delegates to `RPercentage`. Real impl must auto-detect (number/money/date/text) and render accordingly with a `$` sigil. → M4.
++2. **Citation numbering is global & recomputed every render** (`grid.jsx` `citCounter`): O(rows×cols) each paint, and numbers reshuffle on data change. Make it stable per cell. → M4.
++3. **`generateFakeValue` desyncs from real LLM shape**: AI-Suggest fake cells use `{v: ...}` while LLM path uses `{value, flag, citation}`. Normalize on one DTO. → M2/M5.
++4. **No enum palette persistence**: `REnum` falls back to a hash hue; `enum_values_palette` is referenced but never populated. Decide: deterministic hash is fine for demo; document it. → M4.
++5. **Percentage parsing is fragile** (`RPercentage`): mixes `+18%` / `-42%` / bare numbers; negative/positive coloring relies on string prefix. Centralize parsing + guard `NaN` (lesson from reference repo: never let `NaN` reach color logic). → M4.
++6. **`resolveJsonPath` "cheats"** in the demo (returns fallback). Real json_path must resolve against the row JSON (the AskMyDocs `descend()`/`parseJsonPath()` algorithm handles `$.a.b`, `a.b`, `$['a']['b']`). → M2.
++7. **No cancellation safety on preset switch mid-run**: switching preset while `running` can patch stale cells into the new preset. Guard with a run token / abort. → M4.
++8. **Mock stagger uses many `setTimeout`s** — fine for prototype, but the real SSE consumer must use a single EventSource and atomic `updateCells`. → M4.
++9. **DOM grid won't scale**: prototype renders all rows as divs. Article's own thesis: use canvas (Glide) for 100k rows. We adopt Glide from the start. → M4.
++
++### B. Article claims that need a demo-appropriate simplification
++10. Article uses Redis pub/sub + Horizon + KB chunks + reranker confidence. For the demo: synchronous SSE, row-as-context, and a deterministic **FlagClassifier** (green/yellow/red/grey) derived from the LLM's own flag + simple heuristics (mock supplies the flag). → M2.
++11. `confidence_score` from a reranker doesn't exist here → derive a pseudo-confidence from flag (green≈0.9, yellow≈0.65, grey≈0.4, red≈0.2) so the UI tint still works. Document as demo-only. → M2.
++12. Batched JSON-lines call is kept (real cost win + matches AskMyDocs). One LLM call per row, one JSON object per column line. → M2.
++
++### C. SDK / integration facts to respect (from AskMyDocs)
++13. `laravel/ai` real surface: `Laravel\Ai\AnonymousAgent`, `Laravel\Ai\Messages\{UserMessage,AssistantMessage}`, `Laravel\Ai\Gateway\TextGenerationOptions::forAgent()`, response `Laravel\Ai\Responses\AgentResponse` with `->text`, `->usage->{promptTokens,completionTokens}`, `->meta->model`, `->steps->last()?->finishReason`.
++14. **`max_tokens`/`temperature` are silently dropped** unless the agent exposes `maxTokens()`/`temperature()` (AskMyDocs created `RegoloAnonymousAgent` to fix this). We must verify our agent forwards options; add a unit test asserting options reach the wire (or via the provider config). → M2 + LESSON.
++15. Persist cells via an **atomic DB upsert** keyed by `(review_id, row_id, column_index)`, then re-`first()` — Eloquent `updateOrCreate` is not atomic (race under concurrency). → M2.
++16. **Never surface raw provider exception messages** in API responses (may leak hostnames/keys). Log full, return a generic "provider error" cell. → M2 + security rule.
++17. JSON-encode cell content with `JSON_THROW_ON_ERROR | JSON_INVALID_UTF8_SUBSTITUTE`; on failure degrade to a red cell. → M2.
++18. R14 (refusal): a row/column with no usable context returns `flag:red, summary:null` — never an empty 200. → M2.
++
++### D. Feature gaps in the prototype worth adding for a convincing demo
++19. **Citation popover side-panel** (article §13): click a cell → right side-panel showing value, flag, reasoning, model, tokens, citation text, prompt used, actions (Regenerate / Copy). Demo-grade (no real source-doc viewer). → M5 (stretch; ship at least value+reasoning+citation+regenerate).
++20. **Bulk regenerate**: Glide native multi-select → toolbar "Regenerate selected". → M5.
++21. **Skeleton/progress**: per-cell `Loading` kind + top progress bar `done/total` (prototype has both). → M4.
++22. **Export XLSX** is a stub alert in the prototype — keep a stub button (out of scope), or a trivial CSV download. Decide CSV download (cheap, real). → M6.
++23. **16-format showcase preset** must render every renderer once — great Playwright assertion target. → M6.
++
++### E. Cross-cutting guardrails (from reference repo LESSON.md)
++- CSV/any export must neutralize spreadsheet formulas (`=,+,-,@`).
++- Source/`url` cells: restrict to `http:`/`https:` before any `window.open`.
++- Playwright on Windows: Herd PHP, exact label selectors, clean up created rows in `finally`, don't assume globally-unique rows under parallel projects.
++- Vitest in CI: `pool: 'threads'`, set `LARAVEL_BYPASS_ENV_CHECK=1`, validate lockfile with `npx npm@10 ci --dry-run`.
++- Controllers must not call `env()`; read `config()`.
++
++---
++
++## 2. Repository conventions (binding)
++
++- **Branch per macro task**: `task/m1-foundation`, `task/m2-engine`, … Subtask work happens on short-lived branches `task/m2-extractor`, PR'd **into the macro branch**. When the macro task is done, PR the **macro branch → `main`**.
++- **Definition of Done for a (sub)task** — in order, loop until green:
++  1. Objective + implementation detail + guardrails defined (tests).
++  2. **Local tests loop** — all green: `phpunit`, `vitest`, `vite build`, and (if UI/UX) **Playwright scenarios for every interaction**. Fix until green.
++  3. **Local Copilot review loop (before any push)** — run the local Copilot CLI against the *complete* branch diff vs `origin/main`, invoking the `/review` skill, asking for regressions/bugs/bad-practices/security/improvements; fix every legitimate finding, re-run tests + review, loop until clean:
++     ```bash
++     copilot --autopilot --yolo -p "/review the following COMPLETE diff of the current branch against origin/main. Check thoroughly for regressions, bugs, bad practices, security issues, and possible improvements, and report concrete fixes:
++
++     $(git diff origin/main...HEAD)"
++     ```
++  4. Push the branch; open PR toward the working branch.
++  5. Add **GitHub Copilot** as reviewer; confirm its review actually started (GraphQL `requestReviewsByLogin` fallback with `botLogins[]='copilot-pull-request-reviewer[bot]'`, `union=true` if `gh pr edit --add-reviewer @copilot` fails on missing `read:project`).
++  6. Wait for **both** CI green **and** Copilot comments.
++  7. If all green → merge. Else fix broken tests + Copilot comments, push, re-request review, loop.
++  8. Only when fully green: task done → next task. Record findings in `docs/LESSON.md`, progress in `docs/PROGRESS.md`.
++- **Pure-code tasks** need PHPUnit/Vitest only. **Any UI/UX task** additionally needs Playwright scenarios covering all interactions.
++- Update `docs/LESSON.md` whenever something non-obvious is learned (incl. from Copilot feedback). Update `docs/PROGRESS.md` after meaningful work, dated `YYYY-MM-DD`.
++- Every parallel sub-agent and every new session is handed `docs/LESSON.md` + this plan + `AGENTS.md` in context.
++
++---
++
++## 3. Task breakdown
++
++Legend: **[BE]** backend, **[FE]** frontend, **[T]** tests. Each subtask lists
++Objective / Implementation / Guardrails (tests).
++
++### M0 — Governance & scaffolding  ·  branch `task/m0-governance`
++*(THIS task is done first, before any code — per user instruction.)*
++- **M0.1** Create `AGENTS.md`, `CLAUDE.md`, `docs/RULES.md`, `docs/LESSON.md`, `docs/PROGRESS.md`, `docs/plan.md`, and a resume skill `.claude/skills/spreadsheet-ai-plan/SKILL.md`, adapting wording from `product_image_discovery_admin`.
++  - Guardrails: files exist, internally consistent, cross-link each other. (No code tests.)
++- **M0.2** Final-task placeholder noted: *"after all work, fold LESSON.md learnings back into rules/skills/AGENTS.md"* (see M7.3).
++
++### M1 — Laravel foundation + DB + seed data + AI config  ·  branch `task/m1-foundation`
++- **M1.1 [BE]** New Laravel 13 app in repo root (composer, `.env`, SQLite, `laravel/ai`, Sanctum optional-off, Vite). Blade shell route `/` mounting React. Health route `/up`.
++  - Guardrails [T]: `phpunit` smoke test `/` returns 200 + contains root div; `composer validate --strict`.
++- **M1.2 [BE]** E-commerce schema + models + factories: `customers`, `articles`, `orders`, `order_items`, `returns`, `email_campaigns`. Minimal, realistic columns matching preset base columns.
++  - Guardrails [T]: migration + model unit tests; factory smoke.
++- **M1.3 [BE]** Tabular schema: `tabular_reviews` (title, preset_key, row_source, columns_config json, tenant_id='demo'), `tabular_cells` (review_id, row_id, column_index, content json, flag, status, confidence, UNIQUE(review_id,row_id,column_index)), `workflows` (title, preset_key, columns_config json, is_system).
++  - Guardrails [T]: migration tests; unique-constraint test.
++- **M1.4 [BE]** `EcommerceDemoSeeder` (gated to local/testing) loading the exact rows from the 5 presets in `data.jsx` so Mock mode is pixel-faithful. `BuiltinWorkflowSeeder` for the 5 cooked scenarios + 16-format showcase.
++  - Guardrails [T]: seeder idempotent; row counts match presets.
++- **M1.5 [BE]** `config/ai.php` + Anthropic provider wiring for `laravel/ai`; default `claude-haiku-4.5`; `AI_MOCK=true` default.
++  - Guardrails [T]: config test; verify max_tokens/temperature forwarded (finding #14) via a faked HTTP assertion.
++
++### M2 — Backend Tabular engine  ·  branch `task/m2-engine`
++- **M2.1 [BE]** `App\Support\TabularReview\{FormatType,CellFlag,CellStatus}` enums (port 17 formats + `promptSuffix()` + `isLlmFree()` from AskMyDocs).
++  - Guardrails [T]: PHPUnit per format suffix (17), enum membership.
++- **M2.2 [BE]** `RowContextBuilder`: serialize an entity row (+ cheap related data, e.g. customer return history) to the JSON context the LLM sees. `JsonPathResolver` (port `parseJsonPath`/`descend`/`stringify`).
++  - Guardrails [T]: json_path resolves `$.a.b`, bracket notation, booleans→"true"/"false", missing→null.
++- **M2.3 [BE]** `TabularReviewExtractor` (adapted): split json_path vs LLM cols; batched single LLM call per row → JSON-lines; parse; atomic upsert; R14 refusal; never leak provider errors; `$onCell` callback. **MockExtractor** path returns cooked preset cells with a small delay.
++  - Guardrails [T]: batched-parse test, refusal test, malformed-line skip, upsert race (concurrent) test, mock path test.
++- **M2.4 [BE]** `FlagClassifier` + pseudo-confidence mapping (finding #11).
++  - Guardrails [T]: mapping tests.
++- **M2.5 [BE]** REST API: `GET /api/reviews/{preset}` (hydrate review + rows + columns + existing cells), `PATCH /api/reviews/{id}/columns/{idx}` (edit/add column), `DELETE …`, `POST /api/reviews/{id}/columns` (add), `GET /api/suggest/{preset}` (AI-suggest cooked or live). `FormRequest` validation for column shape (format ∈ enum, json_path required iff format=json_path, enum_values iff enum).
++  - Guardrails [T]: feature tests per endpoint + validation rejects bad format/shape.
++- **M2.6 [BE]** **SSE endpoint** `GET /api/reviews/{id}/stream?cols=&force=` → `text/event-stream`; iterate rows, call extractor with `$onCell` echoing `event: cell\n data: {row,col,content,flag,confidence,status}`; emit `done`. Headers `X-Accel-Buffering: no`, `Cache-Control: no-cache`. Mock mode paces output.
++  - Guardrails [T]: feature test asserts event-stream content-type + at least N `cell` events + terminal `done`; error row → red cell event, not 500.
++
++### M3 — Frontend foundation + page shell  ·  branch `task/m3-shell`
++- **M3.1 [FE]** Vite + React 19 + Tailwind v4 + TanStack Query setup; port design tokens (`styles.css`) into Tailwind theme + `tokens.css`; Geist fonts; dark/light + accent data-attributes.
++  - Guardrails [T]: `vite build` passes; Vitest renders root; token smoke test.
++- **M3.2 [FE]** Page composition (port `app.jsx`): `TopChrome`, `HeroBanner` (stats: rows, AI cols, cells, cost, latency), `PresetChips`, `ActionBar` (AI Suggest, Add column, Live/Mock toggle, Export, Share, Run all + progress), `StatusFooter` (recent citations).
++  - Guardrails [T]: Vitest component tests (hero stats compute, chips render, action bar states running/idle); Playwright: page loads, hero + 5 chips visible, theme toggle works.
++- **M3.3 [FE]** API client + TanStack Query hooks (`useReview(preset)`, mutations for column edit/add/delete, suggest). Single source-of-truth cell store keyed `row:col`.
++  - Guardrails [T]: Vitest hook tests with mocked fetch; stale-response guard test (lesson #E).
++
++### M4 — Glide Data Grid + renderers + streaming  ·  branch `task/m4-grid`
++- **M4.1 [FE]** Integrate `@glideapps/glide-data-grid`; base cols + AI cols; sticky header with format icon, name, prompt preview, edit pencil, `$path` tag for json_path; row select; add-column ghost col; Tailwind-v4 theme mapping.
++  - Guardrails [T]: Vitest grid mounts with columns; Playwright: grid renders, header shows prompt preview, pencil visible on AI cols.
++- **M4.2 [FE]** 17 custom canvas cell renderers (fix prototype bugs #1, #2, #5): text, bulleted_list, number, percentage(bar+NaN guard), monetary_amount, currency, yes_no(pill), date, tag, enum(deterministic palette), enum_status(semantic palette), rating(stars), url(favicon+http guard), person(avatar), tags_multi(chips +N), relation(typed chip), json_path(auto-detect + `$` sigil). Confidence dot, citation badge (stable numbering), flag background tint, confidence tint.
++  - Guardrails [T]: Vitest per-renderer snapshot/value tests (esp. percentage parsing, json_path auto-detect, url protocol guard); Playwright on the 16-format showcase preset asserts each renderer visible.
++- **M4.3 [FE]** SSE consumer: single `EventSource`, atomic `gridRef.updateCells`, skeleton (`GridCellKind.Loading`) while generating, top progress bar, **run-token guard** so preset switch mid-run can't patch stale cells (fix #7). Stop/cancel.
++  - Guardrails [T]: Vitest reducer test (cell event → store update, stale token ignored); Playwright: Run all → skeletons → cells fill → progress reaches 100% → footer citations populate.
++
++### M5 — Column editor, AI Suggest, bulk ops, citation panel  ·  branch `task/m5-interactions`
++- **M5.1 [FE]** Column editor drawer (port `editor.jsx`): label, 17-format picker grid, enum-values input (conditional), prompt textarea, Auto-generate, json_path help, cost estimate card. Save → PATCH → regenerate that column via SSE.
++  - Guardrails [T]: Vitest editor logic (auto-generate per format, json_path hides prompt); Playwright: click column pencil → drawer → change prompt/format → Save → that column regenerates (skeletons then new values).
++- **M5.2 [FE]** Add column (new) + delete column. AI Suggest popover (port): proposals per preset; pick → append column + generate.
++  - Guardrails [T]: Vitest popover renders preset proposals; Playwright: AI Suggest → pick proposal → new column appears + fills; add column manual flow; delete column removes it.
++- **M5.3 [FE]** Citation/cell side-panel (finding #19): click cell → panel with value, flag, reasoning, model, tokens, citation, prompt, Regenerate + Copy. Bulk select → "Regenerate selected" (finding #20).
++  - Guardrails [T]: Playwright: click cell opens panel with citation; regenerate single cell; multi-select + bulk regenerate.
++
++### M6 — Presets, workflows, polish, export  ·  branch `task/m6-presets`
++- **M6.1 [BE/FE]** Wire the 5 cooked presets (Returns, Fraud, Articles SS26, Email, + 16-format showcase) end-to-end with their base+AI columns and cooked mock cells matching `data.jsx`. Preset chips switch row source + columns + cells.
++  - Guardrails [T]: feature test each preset hydrates; Playwright: switch all 5 chips, each shows correct entity name + AI columns.
++- **M6.2 [FE]** Polish: loading skeletons everywhere, empty states, toasts, responsive/no-overflow at 125%/150% zoom, a11y labels on icon buttons.
++  - Guardrails [T]: Playwright a11y/zoom checks (no overflow), icon buttons have labels.
++- **M6.3 [BE/FE]** CSV export (formula-neutralized, finding #22) replacing the alert stub; Share button stays a demo toast.
++  - Guardrails [T]: export unit test (formula neutralization); Playwright export triggers download.
++
++### M7 — CI, README, knowledge consolidation, release  ·  branch `task/m7-release`
++- **M7.1** `.github/workflows/ci.yml`: PHP 8.4 + Node, `phpunit` + `vitest` (threads pool) + `vite build` + Playwright (chromium), artifacts on failure.
++  - Guardrails: CI green on a trivial PR.
++- **M7.2** **WOW community `README.md`** (top-tier OSS quality):
++  - Header **badges** (License MIT, Laravel 13, React 19, Vite, Tailwind v4, PHP 8.3+, tests/CI, PRs welcome, `laravel/ai`).
++  - **Banner** image right under the title: `resources/Tabular-Review-Banner.png`.
++  - **Table of Contents**.
++  - **The idea & the intuition** — narrate the "domino" moment from the article; the pattern is back-office triage, not just legal.
++  - **What's innovative / fantastic** — 17 column formats, each column = a prompt, `json_path` zero-LLM bypass, batched JSON-lines streaming (cost O(rows)), canvas Glide grid, AI-Suggest, live cell-by-cell SSE, Mock-mode out-of-the-box.
++  - **Mention & credit MikeOSS** (mikeoss.com, AGPL-3.0) as the originator of the Tabular Review pattern — *Adapt, don't adopt.*
++  - **Screenshots**: `resources/Tabular-Review-Ai-suggested.png` (AI Suggest), `resources/Tabular-Review-Prompt-Column.png` (column prompt editor), plus the hero grid.
++  - **Junior-proof step-by-step Quickstart** (clone → composer install → npm install → .env + sqlite → migrate+seed → npm run dev → open `/` → click a chip → Run all → edit a column → AI Suggest), each step copy-pasteable.
++  - The 3 architecture decisions, how to flip Live mode (API key), demo data, full test gates.
++- **M7.3** **Final knowledge task**: review `docs/LESSON.md` + everything learned; create/strengthen `.claude/skills`, `docs/RULES.md`, `AGENTS.md`, `CLAUDE.md` with the new know-how so nothing is lost.
++- **M7.4** Tag `v0.1.0` and create the GitHub release.
++
++---
++
++## 4. Risks & open questions
++- `laravel/ai` Anthropic agent option-forwarding (finding #14) — verify early in M1.5/M2.3; if options drop, replicate the AskMyDocs `*AnonymousAgent` subclass trick. Record in LESSON.
++- Glide custom canvas renderers are the highest-effort, highest-risk piece (M4.2). Budget accordingly; lean on AskMyDocs `format-renderers` if found in its frontend.
++- SSE + PHP built-in server / Herd buffering: confirm flushing works locally; document the working run command in LESSON.
++
++---
++
++## 5. Quick status pointer
++See `docs/PROGRESS.md` for the live "where am I" log. Current: **M0 in progress** (governance scaffolding being written).

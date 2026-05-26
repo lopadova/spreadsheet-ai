@@ -10,8 +10,8 @@ Binding rules. Adapted from `product_image_discovery_admin/docs/RULES.md`.
 - Narrative/feature reference: `%USERPROFILE%\Downloads\medium\SpreadsheetAi\article-bozza-italiano.md`.
 
 ## Implementation defaults
-- Laravel 13, PHP `^8.3`. SQLite (`database/database.sqlite`). Queue `sync`.
-- LLM via `laravel/ai` (`>=0.6,<0.6.8`). Default provider Anthropic, model `claude-haiku-4.5`. `AI_MOCK=true` by default.
+- Laravel 13, PHP `^8.3` (local Windows runtime: Herd `php84` at `%USERPROFILE%\.config\herd\bin\php84\php.exe`). SQLite (`database/database.sqlite`). Queue `sync`.
+- LLM via `laravel/ai` (`>=0.6,<0.6.8` — upper bound pinned at scaffolding time; verify no breaking changes before M2 and widen if safe). Default provider Anthropic, model `claude-haiku-4.5`. `AI_MOCK=true` by default.
 - Frontend: Blade shell + Vite + React 19 + Tailwind v4 + Glide Data Grid + TanStack Query.
 - API under `/api/...`. SSE stream is synchronous (no Redis/Horizon).
 - Rows are real e-commerce entities (returns/orders/articles/campaigns), seeded from the 5 presets.
@@ -20,7 +20,7 @@ Binding rules. Adapted from `product_image_discovery_admin/docs/RULES.md`.
 - 17 formats live in the `FormatType` enum — the single source of truth. Adding a format = new case + `promptSuffix()` + validator entry + cell renderer.
 - `json_path` is LLM-free: resolves against the serialized row JSON (`$.a.b`, `a.b`, `$['a']['b']`; booleans → "true"/"false"; missing → red refusal).
 - One batched LLM call per row → one JSON line per column. Mock mode returns cooked preset cells.
-- R14 refusal: no usable context → `{flag:red, summary:null}`, never an empty 200.
+- No-context refusal: a row/column with no usable context → `{flag:red, summary:null}`, never an empty 200. (Called "R14" in plan.md §1.C.)
 - Persist cells with atomic DB upsert keyed `(review_id, row_id, column_index)`, then re-`first()`.
 - Encode cell content with `JSON_THROW_ON_ERROR | JSON_INVALID_UTF8_SUBSTITUTE`; degrade to red on failure.
 
@@ -39,7 +39,7 @@ Binding rules. Adapted from `product_image_discovery_admin/docs/RULES.md`.
 - Confidence dot + citation badge + flag background tint per cell; guard `NaN` before any color/width math.
 
 ## Testing rules
-Run the relevant subset before each PR:
+Run the relevant subset before each PR (M1+ only — no `composer.json` exists before M1):
 ```
 composer validate --strict
 npm run phpunit        # Herd PHP wrapper, not XAMPP
@@ -56,12 +56,7 @@ npm run e2e            # Playwright (required for any UI/UX task)
 Order per (sub)task: local tests green → **local Copilot review loop** → push → PR → **GitHub Copilot review** → CI+comments loop → merge.
 
 ### Phase 1 — Local Copilot review (before any push)
-- Run the Copilot CLI against the **complete branch diff vs `origin/main`**, invoking the `/review` skill explicitly (give it the full diff, not just open/changed files, so it has context):
-  ```bash
-  copilot --autopilot --yolo -p "/review the following COMPLETE diff of the current branch against origin/main. Check thoroughly for regressions, bugs, bad practices, security issues, and possible improvements, and report concrete fixes:
-
-  $(git diff origin/main...HEAD)"
-  ```
+- Run the Copilot CLI against the **complete branch diff vs `origin/main`**, invoking the `/review` skill explicitly (give it the full diff, not just open/changed files, so it has context). See `AGENTS.md §Local Copilot review` for the exact command.
 - Fix every legitimate finding, re-run local tests, re-run the local review; loop until clean. Then push.
 
 ### Phase 2 — GitHub Copilot review (after push/PR)
@@ -74,5 +69,5 @@ Order per (sub)task: local tests green → **local Copilot review loop** → pus
 - Update `docs/PROGRESS.md` after meaningful work; `docs/LESSON.md` on non-obvious findings. Date entries `YYYY-MM-DD`.
 
 ## Agent model rules
-- Sub-agents get disjoint write scopes. Hand each `docs/LESSON.md` + `docs/plan.md` + `AGENTS.md`.
+- Sub-agents get disjoint write scopes. Hand each `docs/LESSON.md` + `docs/plan.md` + `docs/RULES.md` + `AGENTS.md`.
 - Main agent stays integrator + final reviewer + merger.

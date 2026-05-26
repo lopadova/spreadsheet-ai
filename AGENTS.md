@@ -27,12 +27,13 @@ default + Live toggle).
 ## Branch & PR loop (mandatory)
 - One **branch per macro task** (`task/m1-foundation`, `task/m2-engine`, …). Subtasks branch off and PR **into the macro branch**; finished macro branch PRs **into `main`**.
 - **A (sub)task is DONE only when, in this order:**
+  0. **Define objective + guardrails as tests** before writing implementation code (TDD).
   1. **Local tests loop** — all green: `phpunit`, `vitest`, `vite build`, and — for any UI/UX work — **Playwright scenarios covering every interaction**. Fix until green.
   2. **Local Copilot review loop** (BEFORE any push) — run the local Copilot CLI against the *complete* branch diff vs `origin/main`, fix everything it flags, re-run, loop until clean. See the exact command below.
   3. Push the branch; open PR toward the working branch.
   4. **GitHub Copilot** requested as reviewer and its review confirmed started.
   5. **GitHub CI + Copilot loop** — wait for both CI green **and** Copilot comments; fix broken tests + comments, push, re-request Copilot review, loop until all green.
-  6. All green → merge. Only then move to the next task.
+  6. All green → merge. Record findings in `docs/LESSON.md`; update `docs/PROGRESS.md`. Only then move to the next task.
 - Pure-code tasks: PHPUnit/Vitest suffice. UI/UX tasks: Playwright is required too.
 
 ### Local Copilot review (step 2 — before push)
@@ -53,15 +54,16 @@ mutation with `botLogins: ["copilot-pull-request-reviewer[bot]"]` and `union: tr
 Do NOT substitute `@codex review` unless the user explicitly asks.
 
 ## Sub-agent strategy
-- Spawn sub-agents for disjoint write scopes (backend vs frontend). Hand each one `docs/LESSON.md` + `docs/plan.md` + this file in its prompt.
+- Spawn sub-agents for disjoint write scopes (backend vs frontend). Hand each one `docs/LESSON.md` + `docs/plan.md` + `docs/RULES.md` + this file in its prompt.
 - Keep one integrator agent responsible for the final gates and the merge.
 - Worker write scopes must not overlap.
 
 ## Environment (Windows / Herd)
-- Use **Herd PHP** (`%USERPROFILE%\.config\herd\bin\php84\php.exe`), not XAMPP. Set `PHP_BINARY` if `php` is not on PATH.
+- Use **Herd PHP** (`%USERPROFILE%\.config\herd\bin\php84\php.exe`), not XAMPP. Set `PHP_BINARY` if `php` is not on PATH. (Herd PHP 8.4 satisfies the `^8.3` composer constraint.)
 - Run the PHPUnit gate through an `npm run phpunit` wrapper (`scripts/run-php.mjs`) to avoid stale PATH / XAMPP resolution.
 - Vitest in CI: `pool: 'threads'`, `LARAVEL_BYPASS_ENV_CHECK=1`. Validate lockfiles with `npx npm@10 ci --dry-run`.
 - If a gate is blocked by sandbox/network, record the exact blocker in `docs/PROGRESS.md` — do not silently skip.
+- **Skill directory**: the resume skill lives at `.claude/skills/spreadsheet-ai-plan/SKILL.md`. If `.claude/skills/` is sandbox-blocked, fall back to a repo-local `skills/` directory.
 
 ## Final task
 After all macro tasks, fold `docs/LESSON.md` learnings back into `docs/RULES.md`,

@@ -29,11 +29,13 @@ Mock-default + Live LLM toggle.
 1. Read current state (above). Scope to the current macro task / subtask from `docs/plan.md` §3.
 2. Implement on a branch (`task/m{N}-{slug}`); subtasks PR into the macro branch.
 3. Define guardrails as tests up front: PHPUnit (backend), Vitest (frontend), and Playwright scenarios for **every** UI/UX interaction.
-4. Definition of Done — in order, loop until green:
-   a. **Local tests** green (phpunit, vitest, vite build, Playwright for UI).
-   b. **Local Copilot review** (before push): `copilot --autopilot --yolo -p "/review <full diff> ..."` passing the COMPLETE diff `git diff origin/main...HEAD` and asking for regressions/bugs/bad-practices/security/improvements; fix + re-run + loop until clean.
-   c. Push → open PR → request **GitHub Copilot** review (confirm started; GraphQL `requestReviewsByLogin` fallback).
-   d. Wait for CI **and** Copilot → fix broken tests + comments → re-push/re-request → merge only when all green.
+4. Definition of Done — canonical 7-step version in `docs/plan.md §2`; summary here:
+   a. **Define guardrails as tests** up front before implementation.
+   b. **Local tests** green (phpunit, vitest, vite build, Playwright for UI).
+   c. **Local Copilot review** (before push): see `AGENTS.md §Local Copilot review` for the exact command. Fix + re-run + loop until clean.
+   d. Push → open PR → request **GitHub Copilot** review (confirm started; GraphQL `requestReviewsByLogin` fallback).
+   e. Wait for CI **and** Copilot → fix → re-push/re-request → merge only when all green.
+   f. Record findings in `docs/LESSON.md`; update `docs/PROGRESS.md`.
 5. After each meaningful step: update `docs/PROGRESS.md`. On any non-obvious learning (incl. Copilot feedback): update `docs/LESSON.md`.
 
 ## Macro task order
@@ -47,5 +49,5 @@ knowledge consolidation + tag `v0.1.0` & GitHub release.
 - Controllers use `config()`, never `env()`. Never leak provider errors/secrets.
 - Atomic cell upsert keyed `(review_id,row_id,column_index)`; encode JSON with `JSON_THROW_ON_ERROR | JSON_INVALID_UTF8_SUBSTITUTE`, degrade to red on failure.
 - `url` cells: `http:`/`https:` only. CSV export: neutralize `= + - @`.
-- Windows/Herd PHP 8.4, not XAMPP; phpunit via `npm run phpunit` wrapper. Vitest `pool: threads`.
+- Windows/Herd PHP 8.4 (satisfies `^8.3`), not XAMPP; phpunit via `npm run phpunit` wrapper. Vitest `pool: threads`.
 - Final task: fold `docs/LESSON.md` into rules/skills/AGENTS.md/CLAUDE.md before tagging the release.

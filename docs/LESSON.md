@@ -6,6 +6,7 @@ most recent first. Every new session and sub-agent should read this.
 ## 2026-05-26 — Seeded from source analysis (before any code)
 
 ### `laravel/ai` SDK surface (from AskMyDocs `app/Ai`)
+- **Version pin `>=0.6,<0.6.8`**: upper bound set at scaffolding time (reason TBD — no confirmed breaking change in 0.6.8 yet). Re-evaluate before M2: run the test suite against `0.6.8+` and widen the constraint if clean.
 - Real classes: `Laravel\Ai\AnonymousAgent`, `Laravel\Ai\Messages\{UserMessage,AssistantMessage}`, `Laravel\Ai\Gateway\TextGenerationOptions::forAgent()`, response `Laravel\Ai\Responses\AgentResponse` (`->text`, `->usage->{promptTokens,completionTokens}`, `->meta->model`, `->steps->last()?->finishReason`).
 - **GOTCHA**: `TextGenerationOptions::forAgent()` reads `maxTokens()`/`temperature()` from the agent instance. A plain `AnonymousAgent` exposes neither, so caller-supplied `max_tokens`/`temperature` are silently dropped. AskMyDocs subclassed it (`RegoloAnonymousAgent`) to add the methods. → Verify our agent forwards options; add a faked-HTTP test asserting `max_tokens`/`temperature` reach the wire. If dropped, replicate the subclass trick.
 - AskMyDocs wraps everything in `App\Ai\AiManager` with `chat(string $system, string $user, array $options): AiResponse` and `chatStream(...)`. We can build a slimmer `AiManager` for the demo.
@@ -18,11 +19,7 @@ most recent first. Every new session and sub-agent should read this.
 - `parseJsonPath` accepts `$.a.b`, `a.b`, and `$['a']['b']`; `descend()` walks arrays; booleans stringify to `"true"/"false"` (PHP `(string) false` is `""`, which loses the value).
 
 ### Prototype bugs to fix when porting (`tabular-review-demo/project`)
-- `RJsonPath` renderer is a stub that always renders as percentage — must auto-detect type.
-- Citation numbering recomputed globally every render (O(rows×cols)) and unstable — make per-cell stable.
-- AI-Suggest fake cells use `{v}` shape while LLM path uses `{value,flag,citation}` — normalize on one DTO.
-- `RPercentage` parsing is fragile (`+18%`/`-42%`/bare) — centralize + guard `NaN` before color/width.
-- Preset switch mid-run can patch stale cells — add a run-token/abort guard.
+See `docs/plan.md §1.A` for the full annotated list (findings 1–9 with task assignments). Quick summary: `RJsonPath` stub, unstable citation numbering, `{v}` vs `{value,flag,citation}` DTO mismatch, fragile `RPercentage` parsing, preset mid-run stale-cell race.
 
 ### Design tokens (`project/styles.css`)
 - Geist Sans + Geist Mono. Dark default. Accent violet (oklch). Status palette: success `#10b981`, paused/yellow `#f59e0b`, failed/red `#ef4444`, grey tertiary. Row height 40px, radii 4/6/8px. Reproduce in Tailwind v4 theme + a `tokens.css`.
@@ -34,10 +31,10 @@ most recent first. Every new session and sub-agent should read this.
 - Vite/Vitest on Windows: `spawn EPERM` issues fixed by recent Vite/Vitest; use `pool: 'threads'` (forks still spawned child processes).
 - CI must make demo data deterministic (fake providers / mock LLM) — our Mock mode is the determinism lever for Playwright.
 
-### Review workflow (locked) — two-phase Copilot
-- **Phase 1, local (before push)**: `copilot --autopilot --yolo -p "/review <full diff> ..."`. Must pass the COMPLETE branch diff (`git diff origin/main...HEAD`) and invoke the `/review` skill explicitly — NOT just open files or changed-branch files, so Copilot has full context. Ask it for regressions, bugs, bad practices, security issues, improvements. Loop (fix → re-test → re-review) until clean.
-- **Phase 2, GitHub (after push/PR)**: request Copilot reviewer on the PR (GraphQL `requestReviewsByLogin` fallback), wait for CI + comments, loop.
-- Rationale (user, 2026-05-26): catch issues locally first → cheaper iterations, cleaner PRs.
+### Review workflow — two-phase Copilot (rationale)
+Phase 1 = local Copilot review before push; Phase 2 = GitHub Copilot PR review after push.
+Full workflow (commands + fallbacks): see `AGENTS.md §Branch & PR loop` and `docs/RULES.md §Review rules`.
+Rationale (user, 2026-05-26): catch issues locally first → cheaper iterations, cleaner PRs.
 
 ### Architecture decisions (locked)
 - SQLite, synchronous SSE (no Redis), Mock-default + Live toggle. Confirmed by user 2026-05-26. Rationale: zero-setup clonable demo.

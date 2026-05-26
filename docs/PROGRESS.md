@@ -16,7 +16,7 @@ Live "where am I" log. Newest first. Resume from the top after any interruption.
 - Only `LICENSE`, `README.md` (stub), plus the new `docs/`, `AGENTS.md`, `CLAUDE.md`, `.claude/` governance files. No Laravel app / frontend yet.
 
 ### Next
-- **M0**: commit governance scaffolding; open `task/m0-governance` branch + PR; request Copilot review; merge when green.
+- **M0**: push `task/m0-governance` branch → run local Copilot review loop (DoD step 2, see `AGENTS.md`) → open PR → request GitHub Copilot review → merge when CI + Copilot green.
 - Then **M1 — Laravel foundation**: scaffold Laravel 13 app, SQLite, `laravel/ai`, Blade+Vite shell, e-commerce schema + seeders, tabular schema. (See plan §3 M1.)
 
 ### Blockers

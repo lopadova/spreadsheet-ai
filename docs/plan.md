@@ -65,7 +65,7 @@ AskMyDocs code. These become guardrails or backlog items in the tasks below.
 15. Persist cells via an **atomic DB upsert** keyed by `(review_id, row_id, column_index)`, then re-`first()` — Eloquent `updateOrCreate` is not atomic (race under concurrency). → M2.
 16. **Never surface raw provider exception messages** in API responses (may leak hostnames/keys). Log full, return a generic "provider error" cell. → M2 + security rule.
 17. JSON-encode cell content with `JSON_THROW_ON_ERROR | JSON_INVALID_UTF8_SUBSTITUTE`; on failure degrade to a red cell. → M2.
-18. R14 (refusal): a row/column with no usable context returns `flag:red, summary:null` — never an empty 200. → M2.
+18. **No-context refusal (R14)**: a row/column with no usable context returns `flag:red, summary:null` — never an empty 200. → M2.
 
 ### D. Feature gaps in the prototype worth adding for a convincing demo
 19. **Citation popover side-panel** (article §13): click a cell → right side-panel showing value, flag, reasoning, model, tokens, citation text, prompt used, actions (Regenerate / Copy). Demo-grade (no real source-doc viewer). → M5 (stretch; ship at least value+reasoning+citation+regenerate).
@@ -89,12 +89,7 @@ AskMyDocs code. These become guardrails or backlog items in the tasks below.
 - **Definition of Done for a (sub)task** — in order, loop until green:
   1. Objective + implementation detail + guardrails defined (tests).
   2. **Local tests loop** — all green: `phpunit`, `vitest`, `vite build`, and (if UI/UX) **Playwright scenarios for every interaction**. Fix until green.
-  3. **Local Copilot review loop (before any push)** — run the local Copilot CLI against the *complete* branch diff vs `origin/main`, invoking the `/review` skill, asking for regressions/bugs/bad-practices/security/improvements; fix every legitimate finding, re-run tests + review, loop until clean:
-     ```bash
-     copilot --autopilot --yolo -p "/review the following COMPLETE diff of the current branch against origin/main. Check thoroughly for regressions, bugs, bad practices, security issues, and possible improvements, and report concrete fixes:
-
-     $(git diff origin/main...HEAD)"
-     ```
+  3. **Local Copilot review loop (before any push)** — run the local Copilot CLI against the *complete* branch diff vs `origin/main`, invoking the `/review` skill, asking for regressions/bugs/bad-practices/security/improvements; fix every legitimate finding, re-run tests + review, loop until clean. See `AGENTS.md §Local Copilot review` for the exact command.
   4. Push the branch; open PR toward the working branch.
   5. Add **GitHub Copilot** as reviewer; confirm its review actually started (GraphQL `requestReviewsByLogin` fallback with `botLogins[]='copilot-pull-request-reviewer[bot]'`, `union=true` if `gh pr edit --add-reviewer @copilot` fails on missing `read:project`).
   6. Wait for **both** CI green **and** Copilot comments.
@@ -102,7 +97,7 @@ AskMyDocs code. These become guardrails or backlog items in the tasks below.
   8. Only when fully green: task done → next task. Record findings in `docs/LESSON.md`, progress in `docs/PROGRESS.md`.
 - **Pure-code tasks** need PHPUnit/Vitest only. **Any UI/UX task** additionally needs Playwright scenarios covering all interactions.
 - Update `docs/LESSON.md` whenever something non-obvious is learned (incl. from Copilot feedback). Update `docs/PROGRESS.md` after meaningful work, dated `YYYY-MM-DD`.
-- Every parallel sub-agent and every new session is handed `docs/LESSON.md` + this plan + `AGENTS.md` in context.
+- Every parallel sub-agent and every new session is handed `docs/LESSON.md` + this plan + `docs/RULES.md` + `AGENTS.md` in context.
 
 ---
 
@@ -127,16 +122,16 @@ Objective / Implementation / Guardrails (tests).
 - **M1.4 [BE]** `EcommerceDemoSeeder` (gated to local/testing) loading the exact rows from the 5 presets in `data.jsx` so Mock mode is pixel-faithful. `BuiltinWorkflowSeeder` for the 5 cooked scenarios + 16-format showcase.
   - Guardrails [T]: seeder idempotent; row counts match presets.
 - **M1.5 [BE]** `config/ai.php` + Anthropic provider wiring for `laravel/ai`; default `claude-haiku-4.5`; `AI_MOCK=true` default.
-  - Guardrails [T]: config test; verify max_tokens/temperature forwarded (finding #14) via a faked HTTP assertion.
+  - Guardrails [T]: config test; verify max_tokens/temperature forwarded (§1.C finding 14) via a faked HTTP assertion.
 
 ### M2 — Backend Tabular engine  ·  branch `task/m2-engine`
 - **M2.1 [BE]** `App\Support\TabularReview\{FormatType,CellFlag,CellStatus}` enums (port 17 formats + `promptSuffix()` + `isLlmFree()` from AskMyDocs).
   - Guardrails [T]: PHPUnit per format suffix (17), enum membership.
 - **M2.2 [BE]** `RowContextBuilder`: serialize an entity row (+ cheap related data, e.g. customer return history) to the JSON context the LLM sees. `JsonPathResolver` (port `parseJsonPath`/`descend`/`stringify`).
   - Guardrails [T]: json_path resolves `$.a.b`, bracket notation, booleans→"true"/"false", missing→null.
-- **M2.3 [BE]** `TabularReviewExtractor` (adapted): split json_path vs LLM cols; batched single LLM call per row → JSON-lines; parse; atomic upsert; R14 refusal; never leak provider errors; `$onCell` callback. **MockExtractor** path returns cooked preset cells with a small delay.
+- **M2.3 [BE]** `TabularReviewExtractor` (adapted): split json_path vs LLM cols; batched single LLM call per row → JSON-lines; parse; atomic upsert; no-context refusal (§1.C.18); never leak provider errors; `$onCell` callback. **MockExtractor** path returns cooked preset cells with a small delay.
   - Guardrails [T]: batched-parse test, refusal test, malformed-line skip, upsert race (concurrent) test, mock path test.
-- **M2.4 [BE]** `FlagClassifier` + pseudo-confidence mapping (finding #11).
+- **M2.4 [BE]** `FlagClassifier` + pseudo-confidence mapping (§1.B finding 11).
   - Guardrails [T]: mapping tests.
 - **M2.5 [BE]** REST API: `GET /api/reviews/{preset}` (hydrate review + rows + columns + existing cells), `PATCH /api/reviews/{id}/columns/{idx}` (edit/add column), `DELETE …`, `POST /api/reviews/{id}/columns` (add), `GET /api/suggest/{preset}` (AI-suggest cooked or live). `FormRequest` validation for column shape (format ∈ enum, json_path required iff format=json_path, enum_values iff enum).
   - Guardrails [T]: feature tests per endpoint + validation rejects bad format/shape.
@@ -149,12 +144,12 @@ Objective / Implementation / Guardrails (tests).
 - **M3.2 [FE]** Page composition (port `app.jsx`): `TopChrome`, `HeroBanner` (stats: rows, AI cols, cells, cost, latency), `PresetChips`, `ActionBar` (AI Suggest, Add column, Live/Mock toggle, Export, Share, Run all + progress), `StatusFooter` (recent citations).
   - Guardrails [T]: Vitest component tests (hero stats compute, chips render, action bar states running/idle); Playwright: page loads, hero + 5 chips visible, theme toggle works.
 - **M3.3 [FE]** API client + TanStack Query hooks (`useReview(preset)`, mutations for column edit/add/delete, suggest). Single source-of-truth cell store keyed `row:col`.
-  - Guardrails [T]: Vitest hook tests with mocked fetch; stale-response guard test (lesson #E).
+  - Guardrails [T]: Vitest hook tests with mocked fetch; stale-response guard test (§1.E).
 
 ### M4 — Glide Data Grid + renderers + streaming  ·  branch `task/m4-grid`
 - **M4.1 [FE]** Integrate `@glideapps/glide-data-grid`; base cols + AI cols; sticky header with format icon, name, prompt preview, edit pencil, `$path` tag for json_path; row select; add-column ghost col; Tailwind-v4 theme mapping.
   - Guardrails [T]: Vitest grid mounts with columns; Playwright: grid renders, header shows prompt preview, pencil visible on AI cols.
-- **M4.2 [FE]** 17 custom canvas cell renderers (fix prototype bugs #1, #2, #5): text, bulleted_list, number, percentage(bar+NaN guard), monetary_amount, currency, yes_no(pill), date, tag, enum(deterministic palette), enum_status(semantic palette), rating(stars), url(favicon+http guard), person(avatar), tags_multi(chips +N), relation(typed chip), json_path(auto-detect + `$` sigil). Confidence dot, citation badge (stable numbering), flag background tint, confidence tint.
+- **M4.2 [FE]** 17 custom canvas cell renderers (fix prototype bugs §1.A findings 1, 2, 5): text, bulleted_list, number, percentage(bar+NaN guard), monetary_amount, currency, yes_no(pill), date, tag, enum(deterministic palette), enum_status(semantic palette), rating(stars), url(favicon+http guard), person(avatar), tags_multi(chips +N), relation(typed chip), json_path(auto-detect + `$` sigil). Confidence dot, citation badge (stable numbering), flag background tint, confidence tint.
   - Guardrails [T]: Vitest per-renderer snapshot/value tests (esp. percentage parsing, json_path auto-detect, url protocol guard); Playwright on the 16-format showcase preset asserts each renderer visible.
 - **M4.3 [FE]** SSE consumer: single `EventSource`, atomic `gridRef.updateCells`, skeleton (`GridCellKind.Loading`) while generating, top progress bar, **run-token guard** so preset switch mid-run can't patch stale cells (fix #7). Stop/cancel.
   - Guardrails [T]: Vitest reducer test (cell event → store update, stale token ignored); Playwright: Run all → skeletons → cells fill → progress reaches 100% → footer citations populate.
@@ -164,7 +159,7 @@ Objective / Implementation / Guardrails (tests).
   - Guardrails [T]: Vitest editor logic (auto-generate per format, json_path hides prompt); Playwright: click column pencil → drawer → change prompt/format → Save → that column regenerates (skeletons then new values).
 - **M5.2 [FE]** Add column (new) + delete column. AI Suggest popover (port): proposals per preset; pick → append column + generate.
   - Guardrails [T]: Vitest popover renders preset proposals; Playwright: AI Suggest → pick proposal → new column appears + fills; add column manual flow; delete column removes it.
-- **M5.3 [FE]** Citation/cell side-panel (finding #19): click cell → panel with value, flag, reasoning, model, tokens, citation, prompt, Regenerate + Copy. Bulk select → "Regenerate selected" (finding #20).
+- **M5.3 [FE]** Citation/cell side-panel (§1.D finding 19): click cell → panel with value, flag, reasoning, model, tokens, citation, prompt, Regenerate + Copy. Bulk select → "Regenerate selected" (§1.D finding 20).
   - Guardrails [T]: Playwright: click cell opens panel with citation; regenerate single cell; multi-select + bulk regenerate.
 
 ### M6 — Presets, workflows, polish, export  ·  branch `task/m6-presets`
@@ -172,7 +167,7 @@ Objective / Implementation / Guardrails (tests).
   - Guardrails [T]: feature test each preset hydrates; Playwright: switch all 5 chips, each shows correct entity name + AI columns.
 - **M6.2 [FE]** Polish: loading skeletons everywhere, empty states, toasts, responsive/no-overflow at 125%/150% zoom, a11y labels on icon buttons.
   - Guardrails [T]: Playwright a11y/zoom checks (no overflow), icon buttons have labels.
-- **M6.3 [BE/FE]** CSV export (formula-neutralized, finding #22) replacing the alert stub; Share button stays a demo toast.
+- **M6.3 [BE/FE]** CSV export (formula-neutralized, §1.D finding 22) replacing the alert stub; Share button stays a demo toast.
   - Guardrails [T]: export unit test (formula neutralization); Playwright export triggers download.
 
 ### M7 — CI, README, knowledge consolidation, release  ·  branch `task/m7-release`
@@ -194,7 +189,7 @@ Objective / Implementation / Guardrails (tests).
 ---
 
 ## 4. Risks & open questions
-- `laravel/ai` Anthropic agent option-forwarding (finding #14) — verify early in M1.5/M2.3; if options drop, replicate the AskMyDocs `*AnonymousAgent` subclass trick. Record in LESSON.
+- `laravel/ai` Anthropic agent option-forwarding (§1.C finding 14) — verify early in M1.5/M2.3; if options drop, replicate the AskMyDocs `*AnonymousAgent` subclass trick. Record in LESSON.
 - Glide custom canvas renderers are the highest-effort, highest-risk piece (M4.2). Budget accordingly; lean on AskMyDocs `format-renderers` if found in its frontend.
 - SSE + PHP built-in server / Herd buffering: confirm flushing works locally; document the working run command in LESSON.
 
