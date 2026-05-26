@@ -8,7 +8,7 @@
 // the live cell from the shared store so a Regenerate re-stream updates it.
 // ============================================================
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { AiColumn, Cell } from '../api/client';
 import { formatIcon } from '../lib/formats';
 import { citationText, normaliseFlag, valueToText, type Flag } from '../grid/format';
@@ -78,6 +78,7 @@ export function CellSidePanel({
 }: CellSidePanelProps) {
     const [promptOpen, setPromptOpen] = useState(false);
     const [copied, setCopied] = useState(false);
+    const copyTimerRef = useRef<number | null>(null);
 
     // Close on Escape; guard so the effect only attaches when the panel is open.
     useEffect(() => {
@@ -88,6 +89,24 @@ export function CellSidePanel({
         document.addEventListener('keydown', onKey);
         return () => document.removeEventListener('keydown', onKey);
     }, [open, selection, onClose]);
+
+    // Reset transient UI (collapsed prompt, "Copied!") whenever a different cell
+    // is opened or the panel is closed, so each cell starts fresh. Also clear any
+    // pending copy-reset timer so it can't fire on a hidden/different cell.
+    const selKey = selection ? `${selection.rowId}:${selection.columnIndex}` : null;
+    useEffect(() => {
+        setPromptOpen(false);
+        setCopied(false);
+        if (copyTimerRef.current != null) {
+            clearTimeout(copyTimerRef.current);
+            copyTimerRef.current = null;
+        }
+    }, [selKey, open]);
+
+    // Clear the copy timer on unmount.
+    useEffect(() => () => {
+        if (copyTimerRef.current != null) clearTimeout(copyTimerRef.current);
+    }, []);
 
     if (!open || selection == null) return null;
 
@@ -100,7 +119,13 @@ export function CellSidePanel({
     const handleCopy = async () => {
         const ok = await copyToClipboard(valueText);
         setCopied(ok);
-        if (ok) window.setTimeout(() => setCopied(false), 1500);
+        if (ok) {
+            if (copyTimerRef.current != null) clearTimeout(copyTimerRef.current);
+            copyTimerRef.current = window.setTimeout(() => {
+                setCopied(false);
+                copyTimerRef.current = null;
+            }, 1500);
+        }
     };
 
     return (
