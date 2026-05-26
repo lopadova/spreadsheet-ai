@@ -1,4 +1,11 @@
 <?php return array (
+  'laravel/ai' => 
+  array (
+    'providers' => 
+    array (
+      0 => 'Laravel\\Ai\\AiServiceProvider',
+    ),
+  ),
   'laravel/pail' => 
   array (
     'providers' => 
