@@ -57,17 +57,11 @@ Live "where am I" log. Newest first. Resume from the top after any interruption.
 
 ### Next
 
-- **M6 — Presets, polish, export** (in progress): verify 5 presets end-to-end (done via PresetData), polish/skeletons/empty-states/a11y, no-overflow at 125%/150% zoom, CSV export (formula-neutralized) replacing the Export stub. Vitest + Playwright.
-
-- **M5 — Column editor, AI Suggest, bulk, citation panel** (in progress): editor drawer (17-format picker, enum input, prompt textarea, Auto-generate, json_path help, cost card) → Save → regenerate column via SSE; add/delete column; AI Suggest full picker → add+generate; cell click → citation side-panel (value/flag/reasoning/citation/prompt + Regenerate + Copy); Glide multi-select → bulk regenerate. Vitest + Playwright every interaction.
-
-- **M4 — Glide Data Grid + 17 renderers + SSE consumer** (in progress): replace GridPlaceholder with @glideapps/glide-data-grid canvas; 17 custom cell renderers (fix prototype bugs: RJsonPath auto-detect, stable citation numbering, percentage NaN guard, url protocol); confidence dot + citation badge + flag tint; skeleton(Loading)+progress; single EventSource → atomic updateCells; run-token guard on preset switch; Run all/Stop. Vitest + Playwright.
-
-- **M3 — Frontend shell + page composition** (in progress): TopChrome, HeroBanner (stats), PresetChips, ActionBar (AI Suggest, Add column, Live/Mock toggle, Export, Share, Run all), StatusFooter; TanStack Query client + hooks on the M2 contract; cell store; placeholder grid region (real Glide grid = M4). Vitest + Playwright.
+- **M7 — tag `v0.1.0` + GitHub release** (in progress): WOW README merged; RULES.md distilled. Remaining: cut the tag, publish the GitHub release, fold LESSON back into AGENTS.md/CLAUDE.md/skills.
 
 ### Blockers
 - **GitHub Copilot PR review not serviced on this repo.** PR #1: REST request accepted (`Copilot`) but `reviewRequests` clears instantly, no review posted after 12+ min. Feature not enabled/entitled for `lopadova/spreadsheet-ai`. Policy adopted: bounded wait (~3–5 min) on GitHub Copilot, then rely on local Copilot `/review` + green local tests as the binding gate. Owner can enable "Copilot code review" in repo settings to make the GitHub gate real. (See `docs/LESSON.md`.)
-- License mismatch: repo is Apache-2.0, README/article say MIT → resolve in M7.
+- ~~License mismatch: repo is Apache-2.0, README/article say MIT → resolve in M7.~~ **RESOLVED (M7):** README badges + License section now state Apache-2.0 accurately.
 
 ### M0 outcome (2026-05-26)
 - PR #1 `task/m0-governance` → `main`: local Copilot `/review` passed (13 fixes), local gates N/A (docs only), GitHub Copilot review unavailable → merged under the bounded-wait policy.

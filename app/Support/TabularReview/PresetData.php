@@ -758,7 +758,7 @@ class PresetData
         return [
             'key' => 'formats',
             'emoji' => '🌈',
-            'label' => 'Tutti i 16 formati',
+            'label' => 'Tutti i 17 formati',
             'sub' => 'Showcase visivo · ogni colonna un tipo',
             'description' => 'Ogni colonna mostra uno dei 16 format type renderizzato dalla griglia.',
             'entity_name' => 'Esempio',

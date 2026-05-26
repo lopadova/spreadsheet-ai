@@ -45,8 +45,8 @@ test.describe('Tabular Review page shell (M3)', () => {
         await page.getByRole('tab', { name: /Audit Campagne/i }).click();
         await expect(footerBadge).toHaveText(/8 Campagne/);
 
-        // formats showcase → 5 examples, 16 AI columns shown in hero.
-        await page.getByRole('tab', { name: /Tutti i 16 formati/i }).click();
+        // formats showcase → 5 examples, 17 AI columns shown in hero.
+        await page.getByRole('tab', { name: /Tutti i 17 formati/i }).click();
         await expect(footerBadge).toHaveText(/5 Esempi/);
     });
 

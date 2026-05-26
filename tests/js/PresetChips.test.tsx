@@ -8,7 +8,7 @@ describe('PresetChips', () => {
         const chips = screen.getAllByRole('tab');
         expect(chips).toHaveLength(5);
         expect(screen.getByText('Triage Resi')).toBeInTheDocument();
-        expect(screen.getByText('Tutti i 16 formati')).toBeInTheDocument();
+        expect(screen.getByText('Tutti i 17 formati')).toBeInTheDocument();
     });
 
     it('marks the active chip as selected', () => {
