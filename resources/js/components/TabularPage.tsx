@@ -60,6 +60,14 @@ export function TabularPage() {
 
     const gridRef = useRef<DataEditorRef | null>(null);
 
+    // Switching presets changes the columns/rows entirely, so any column/cell
+    // selection from the previous preset is invalid — clear it (otherwise the
+    // bulk toolbar could act on the wrong preset's columns).
+    useEffect(() => {
+        setGridSelection(EMPTY_SELECTION);
+        setCellSel(null);
+    }, [preset]);
+
     useEffect(() => {
         document.documentElement.dataset.theme = theme;
         setThemeVersion((v) => v + 1);
@@ -151,8 +159,10 @@ export function TabularPage() {
             setEditorOpen(false);
             // Backend destroy() reindexes all columns after the deleted one, so any
             // panel at-or-after the deleted index now points at the wrong/invalid
-            // column — close it.
+            // column — close it. Column positions also shift, so drop the grid
+            // selection (its indexes would be stale/out-of-range).
             setCellSel((s) => (s != null && s.columnIndex >= index ? null : s));
+            setGridSelection(EMPTY_SELECTION);
         },
         [deleteColumn, toast],
     );
