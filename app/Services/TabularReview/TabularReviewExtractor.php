@@ -84,6 +84,8 @@ class TabularReviewExtractor
                 ->where('review_id', $review->id)
                 ->where('row_id', $rowId)
                 ->where('status', CellStatus::READY->value)
+                // Only need the indexes we're about to (re)generate.
+                ->when($columnIndexes !== null, fn ($q) => $q->whereIn('column_index', $columnIndexes))
                 ->pluck('column_index')
                 ->map(static fn ($i) => (int) $i)
                 ->all();

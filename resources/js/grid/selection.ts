@@ -41,7 +41,7 @@ export function selectedAiColumnIndexes(
     }
 
     // Cell-range selections (current + any additive ranges).
-    const ranges = [];
+    const ranges: Array<{ x: number; width: number }> = [];
     if (selection.current) {
         ranges.push(selection.current.range);
         for (const r of selection.current.rangeStack ?? []) ranges.push(r);

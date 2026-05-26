@@ -17,7 +17,7 @@ import {
     useSuggestions,
     useUpdateColumn,
 } from '../hooks/useReview';
-import { useCellStore } from '../store/cells';
+import { cellKey, useCellStore } from '../store/cells';
 import { sharedCellStore } from '../store/sharedCellStore';
 import { computeHeroStats } from '../lib/stats';
 import { DEFAULT_PRESET, presetMeta } from '../lib/presets';
@@ -89,18 +89,11 @@ export function TabularPage() {
     const updateColumn = useUpdateColumn(preset, reviewId);
     const deleteColumn = useDeleteColumn(preset, reviewId);
 
-    // After an add/update mutation resolves, the review refetches and
-    // `aiColumns` gains the new/edited column. We stash the target index here
-    // and fire runColumns([index]) once that index is actually present.
-    const pendingRegenRef = useRef<number | null>(null);
-    useEffect(() => {
-        const idx = pendingRegenRef.current;
-        if (idx == null) return;
-        if (aiColumns.some((c) => c.index === idx)) {
-            pendingRegenRef.current = null;
-            runColumns([idx]);
-        }
-    }, [aiColumns, runColumns]);
+    // Regenerate a column right after its add/update mutation resolves. We call
+    // runColumns() directly from onSuccess (the column already exists server-side
+    // and in the cache via setQueryData) rather than watching `aiColumns` in an
+    // effect — React Query's structural sharing can keep the same array reference
+    // after an optimistic update, so an effect dep on `aiColumns` may never fire.
 
     // ---- Column editor ------------------------------------------------
     const openNewColumn = useCallback(() => {
@@ -117,29 +110,37 @@ export function TabularPage() {
 
     const handleEditorSubmit = useCallback(
         (payload: ColumnInput, mode: ColumnEditorMode, index?: number) => {
+            // Keep the drawer open if the mutation fails (e.g. validation), so the
+            // user doesn't lose their input; close only on success.
+            const onError = () =>
+                toast.push({ title: 'Salvataggio fallito', body: 'Controlla i campi e riprova.' });
+
             if (mode === 'edit' && index != null) {
                 updateColumn.mutate(
                     { index, col: payload },
                     {
                         onSuccess: () => {
-                            pendingRegenRef.current = index;
+                            runColumns([index]);
                             toast.push({ title: 'Colonna aggiornata', body: payload.name });
+                            setEditorOpen(false);
                         },
+                        onError,
                     },
                 );
             } else {
                 addColumn.mutate(payload, {
                     onSuccess: (review) => {
-                        // Derive the new column's index from the returned payload
-                        // (robust to prior deletes), not from a stale local count.
-                        pendingRegenRef.current = lastColumnIndex(review);
+                        // New column's index from the returned payload (robust to
+                        // prior deletes); it already exists in the cache here.
+                        runColumns([lastColumnIndex(review)]);
                         toast.push({ title: 'Colonna aggiunta', body: payload.name });
+                        setEditorOpen(false);
                     },
+                    onError,
                 });
             }
-            setEditorOpen(false);
         },
-        [addColumn, updateColumn, toast],
+        [addColumn, updateColumn, runColumns, toast],
     );
 
     const handleEditorDelete = useCallback(
@@ -166,13 +167,13 @@ export function TabularPage() {
                 },
                 {
                     onSuccess: (review) => {
-                        pendingRegenRef.current = lastColumnIndex(review);
+                        runColumns([lastColumnIndex(review)]);
                         toast.push({ title: 'AI Suggest', body: `Colonna "${s.name}" aggiunta` });
                     },
                 },
             );
         },
-        [addColumn, toast],
+        [addColumn, runColumns, toast],
     );
 
     // ---- Cell side-panel ----------------------------------------------
@@ -183,7 +184,7 @@ export function TabularPage() {
     // Read via the reactive `cells` map so a regenerate re-stream re-renders the
     // panel (a direct store.get() during render wouldn't subscribe to updates).
     const selectedCell = cellSel
-        ? cells.get(`${cellSel.rowId}:${cellSel.columnIndex}`)
+        ? cells.get(cellKey(cellSel.rowId, cellSel.columnIndex))
         : undefined;
     const selectedColumn = cellSel
         ? aiColumns.find((c) => c.index === cellSel.columnIndex)

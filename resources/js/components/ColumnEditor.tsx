@@ -142,6 +142,33 @@ export function ColumnEditor({
         }, 120);
     };
 
+    // Clear a pending auto-generate timer when the drawer closes or unmounts,
+    // so a late setState can't fire on a hidden/unmounted editor.
+    useEffect(() => {
+        if (!open && autogenTimerRef.current != null) {
+            clearTimeout(autogenTimerRef.current);
+            autogenTimerRef.current = null;
+        }
+        return () => {
+            if (autogenTimerRef.current != null) {
+                clearTimeout(autogenTimerRef.current);
+                autogenTimerRef.current = null;
+            }
+        };
+    }, [open]);
+
+    // Client-side validation mirrors the backend ColumnRequest rules so an
+    // invalid Save can't round-trip to a 422.
+    const enumList = enumValues.split(',').map((s) => s.trim()).filter(Boolean);
+    const validationError =
+        name.trim() === ''
+            ? 'Label obbligatoria.'
+            : format === 'enum' && enumList.length === 0
+                ? 'Per il formato enum serve almeno un valore.'
+                : format === 'json_path' && prompt.trim() === ''
+                    ? 'Il JSON Path è obbligatorio.'
+                    : null;
+
     const cost = useMemo(() => {
         if (isJsonPath) {
             return { tokens: '0 token', euro: '€0.00 (free)', latency: '< 5ms', free: true };
@@ -157,6 +184,7 @@ export function ColumnEditor({
     if (!open) return null;
 
     const handleSave = () => {
+        if (validationError !== null) return;
         const payload = buildColumnPayload({ name, format, prompt, enumValues });
         onSubmit(payload, mode, mode === 'edit' ? column?.index : undefined);
     };
@@ -289,8 +317,18 @@ export function ColumnEditor({
                             Delete column
                         </button>
                     )}
+                    {validationError !== null && (
+                        <span className="tertiary" role="alert" style={{ fontSize: 11, color: 'var(--status-failed)', marginRight: 8 }}>
+                            {validationError}
+                        </span>
+                    )}
                     <button className="btn ghost" type="button" onClick={onClose}>Cancel</button>
-                    <button className="btn primary" type="button" onClick={handleSave} disabled={saving}>
+                    <button
+                        className="btn primary"
+                        type="button"
+                        onClick={handleSave}
+                        disabled={saving || validationError !== null}
+                    >
                         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
                             <polyline points="20 6 9 17 4 12" />
                         </svg>

@@ -3,6 +3,16 @@
 Non-obvious facts, fixes, and gotchas. Append dated entries (`YYYY-MM-DD`),
 most recent first. Every new session and sub-agent should read this.
 
+## 2026-05-26 — GitHub Copilot PR review (PR #6) findings (applied)
+GitHub Copilot DID post inline review comments on PR #6 (it works — just slower than the local CLI). Fixes:
+- **Regenerate-after-edit regression (real bug Copilot surfaced)**: firing `runColumns([idx])` from an effect watching `aiColumns` is fragile — React Query **structural sharing** keeps the same array reference after an optimistic update + identical server payload, so the effect never re-fires and the column never regenerates. Fix: call `runColumns([idx])` **directly in the mutation `onSuccess`** (the column already exists server-side and in cache via `setQueryData`). Removed the `pendingRegenRef` effect entirely. Bonus: regeneration is now instant (e2e dropped from ~1.2min to ~18s).
+- **Editor closes on failure**: `handleEditorSubmit` closed the drawer unconditionally; now closes only in `onSuccess` (keeps input on validation error) + an `onError` toast.
+- **Client-side validation** in `ColumnEditor` (name required; enum needs ≥1 value; json_path required) disables Save + shows a message — prevents a 422 round-trip.
+- **Auto-generate timer cleanup** on drawer close/unmount (was only cleared on re-click).
+- **`cellKey()` helper** used instead of duplicating the `${rowId}:${columnIndex}` template.
+- **`selection.ts` `ranges`** given an explicit type (was `any[]` under strict).
+- **Extractor ready-skip** query scoped to `$columnIndexes` when provided (don't pluck the whole row).
+
 ## 2026-05-26 — PR #1–#5 user-review fixes (applied)
 User did a deep review of the first 5 merged PRs. Fixes applied (on the M5 branch → main):
 - **Docs**: removed the inaccurate GraphQL `requestReviewsByLogin` claim from the reference-repo note in LESSON (the REST method is the only one that works); AGENTS local-review command no longer uses inline `$(git diff)` (arg-overflow) — it writes `.review-diff.patch` and Copilot reads it. (SKILL/plan/AGENTS GraphQL refs were already fixed earlier on this branch.)
