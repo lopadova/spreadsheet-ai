@@ -87,8 +87,9 @@ test.describe('CSV export (M6.3)', () => {
         // preset has no such base data, so assert the structural invariant: no
         // raw line starts with an un-neutralised formula trigger.
         const path = await download.path();
+        expect(path, 'download should have a local path').not.toBeNull();
         const fs = await import('node:fs/promises');
-        const csv = await fs.readFile(path, 'utf8');
+        const csv = await fs.readFile(path as string, 'utf8');
         const lines = csv.replace(/^\uFEFF/, '').split('\r\n').filter((l) => l.length > 0);
         // RFC-4180-correct first-field extractor: a quoted field may contain
         // escaped quotes ("") and commas, so we can't just split on the first
