@@ -32,8 +32,8 @@ default + Live toggle).
   2. **Local Copilot review loop** (BEFORE any push) — run the local Copilot CLI against the *complete* branch diff vs `origin/main`, fix everything it flags, re-run, loop until clean. See the exact command below.
   3. Push the branch; open PR toward the working branch.
   4. **GitHub Copilot** requested as reviewer and its review confirmed started.
-  5. **GitHub CI + Copilot loop (bounded)** — wait for CI green **and** Copilot comments; fix broken tests + comments, push, re-request review, loop. **Bounded wait**: GitHub Copilot review is currently NOT serviced on this repo (see `docs/LESSON.md`); if it doesn't materialize within ~3–5 min, the local Copilot `/review` + green local tests are the binding gate — record it in `docs/PROGRESS.md` and proceed.
-  6. All green → merge. Record findings in `docs/LESSON.md`; update `docs/PROGRESS.md`. Only then move to the next task.
+  5. **GitHub CI + Copilot loop (MANDATORY — never merge early)** — after pushing, the **GitHub Actions CI** (`.github/workflows/ci.yml`: phpunit + vitest + typecheck + build + Playwright) MUST run and go **green**, AND the **GitHub Copilot review MUST actually post** and have **zero unresolved comments**. Poll/wait as long as needed (minutes); do NOT merge while CI is pending/red or while Copilot has not reviewed or has open comments. If CI fails or Copilot leaves comments → fix, push, re-request Copilot review, and loop. Re-request Copilot via the REST endpoint (step 4) and verify it shows in `reviewRequests`.
+  6. Merge ONLY when **CI is green AND Copilot has reviewed with zero open comments**. Then record findings in `docs/LESSON.md`; update `docs/PROGRESS.md`. Only then move to the next task.
 - Pure-code tasks: PHPUnit/Vitest suffice. UI/UX tasks: Playwright is required too.
 
 ### Local Copilot review (step 2 — before push)

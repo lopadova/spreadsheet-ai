@@ -59,10 +59,10 @@ Order per (sub)task: local tests green → **local Copilot review loop** → pus
 - Run the Copilot CLI against the **complete branch diff vs `origin/main`**, invoking the `/review` skill explicitly (give it the full diff, not just open/changed files, so it has context). See `AGENTS.md §Local Copilot review` for the exact command.
 - Fix every legitimate finding, re-run local tests, re-run the local review; loop until clean. Then push.
 
-### Phase 2 — GitHub Copilot review (after push/PR)
-- Request **GitHub Copilot** Code Review via the REST endpoint (verified working on PR #1):
-  `gh api --method POST repos/<owner>/<repo>/pulls/<PR>/requested_reviewers -f 'reviewers[]=copilot-pull-request-reviewer[bot]'`
-- Confirm it started: `gh pr view <PR> --json reviewRequests` must list the `Copilot` bot. `gh pr edit --add-reviewer @copilot` is a silent no-op — do not rely on it.
+### Phase 2 — GitHub CI + Copilot review (after push/PR) — MANDATORY, never merge early
+- **CI**: `.github/workflows/ci.yml` runs on every PR (composer validate, phpunit, typecheck, vitest, vite build, Playwright e2e). It MUST be **green** before merge.
+- **Copilot review**: request it via REST `gh api --method POST repos/<owner>/<repo>/pulls/<PR>/requested_reviewers -f 'reviewers[]=copilot-pull-request-reviewer[bot]'`; confirm with `gh pr view <PR> --json reviewRequests` (lists `Copilot`). `gh pr edit --add-reviewer @copilot` is a silent no-op. Copilot can take several minutes — **wait for the review to actually post** (`gh pr view <PR> --json reviews` shows a Copilot review) and ensure **zero unresolved inline comments** (`gh api .../pulls/<PR>/comments`).
+- **Merge ONLY when CI is green AND Copilot has reviewed with zero open comments.** If CI red or Copilot has comments → fix, push, re-request review, loop. NEVER merge while CI is pending/red or Copilot hasn't reviewed. (The earlier "bounded-wait, merge anyway" policy is REVOKED.)
 - Do not use `@codex review` unless the user explicitly asks.
 - Fold Copilot learnings (local + GitHub) into `docs/LESSON.md`.
 
