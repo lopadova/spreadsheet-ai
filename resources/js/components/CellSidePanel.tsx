@@ -112,11 +112,13 @@ export function CellSidePanel({
 
     const flag = normaliseFlag(cell?.flag);
     const value = cell?.content?.summary ?? null;
-    const valueText = value == null ? '—' : valueToText(value);
+    const hasValue = value != null;
+    const valueText = hasValue ? valueToText(value) : '—';
     const reasoning = cell?.content?.reasoning ?? null;
     const citations = citationList(cell?.content?.citations);
 
     const handleCopy = async () => {
+        if (!hasValue) return; // nothing real to copy (pending/empty cell)
         const ok = await copyToClipboard(valueText);
         setCopied(ok);
         if (ok) {
@@ -218,7 +220,13 @@ export function CellSidePanel({
                     </svg>
                     Regenerate
                 </button>
-                <button className="btn" type="button" onClick={handleCopy}>
+                <button
+                    className="btn"
+                    type="button"
+                    onClick={handleCopy}
+                    disabled={!hasValue}
+                    title={hasValue ? 'Copy value' : 'Nothing to copy yet'}
+                >
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
                         <rect x="9" y="9" width="11" height="11" rx="2" />
                         <path d="M5 15V5a2 2 0 0 1 2-2h10" />

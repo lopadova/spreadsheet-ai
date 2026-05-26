@@ -149,8 +149,10 @@ export function TabularPage() {
                 onSuccess: () => toast.push({ title: 'Colonna eliminata', body: `col ${index}` }),
             });
             setEditorOpen(false);
-            // Close the side-panel if it was pointing at the deleted column.
-            setCellSel((s) => (s?.columnIndex === index ? null : s));
+            // Backend destroy() reindexes all columns after the deleted one, so any
+            // panel at-or-after the deleted index now points at the wrong/invalid
+            // column — close it.
+            setCellSel((s) => (s != null && s.columnIndex >= index ? null : s));
         },
         [deleteColumn, toast],
     );
