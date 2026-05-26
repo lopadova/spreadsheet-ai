@@ -3,6 +3,11 @@
 Non-obvious facts, fixes, and gotchas. Append dated entries (`YYYY-MM-DD`),
 most recent first. Every new session and sub-agent should read this.
 
+## 2026-05-26 — v1.0.0 close-out
+- Security: bumped `symfony/polyfill-intl-idn` v1.37.0 → v1.38.1 (CVE-2026-46644); `composer audit` clean. Only `composer.lock` changed (constraint untouched).
+- README WOW + alignment verified: chip labels match `presets.ts`, model `claude-haiku-4-5`, Apache-2.0 everywhere (incl. composer.json), Node 22, sqlite create step, 17 format types / 16-column showcase. No drift.
+- Stale remote branch `copilot/deep-review-prs` left as-is (owner's deep-review branch).
+
 ## 2026-05-26 — CI-only horizontal overflow (Glide grid flex item)
 - The overflow e2e passed locally (Windows) + on earlier CI runs but failed on Linux CI with `.page-content` overflowing ~589px. Cause: `.agentic-grid-wrap` is a flex item with the default `min-width:auto` (= content width), so the Glide canvas grew to its intrinsic total-column width and widened the page (CI's headless chromium sized it before/differently than local). Fix: `min-width:0` (+ `overflow:hidden`) on the grid flex wrap → Glide sizes its canvas to the container and scrolls columns internally. Textbook flex-item content-overflow fix. Also: do NOT add `overflow-x:hidden` as a fallback to `overflow-x:clip` on a container measured for overflow — `hidden` forces `overflow-y:auto`, adding a vertical scrollbar that shrinks clientWidth and falsely trips the check.
 
