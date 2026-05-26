@@ -19,7 +19,11 @@ return new class extends Migration
             $table->boolean('is_system')->default(false);
             $table->timestamps();
 
-            $table->index('tenant_id');
+            // One workflow per (tenant, preset_key) — prevents duplicate
+            // system/preset workflows under re-seeding or concurrency.
+            // (preset_key is nullable; SQLite/Postgres treat NULLs as distinct,
+            // so user workflows without a preset_key are unconstrained.)
+            $table->unique(['tenant_id', 'preset_key']);
         });
     }
 

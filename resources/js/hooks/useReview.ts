@@ -12,7 +12,6 @@ import {
     getReview,
     getSuggestions,
     updateColumn,
-    type AiColumn,
     type ColumnInput,
     type ReviewResponse,
     type SuggestionsResponse,
@@ -54,19 +53,24 @@ export function useSuggestions(
     });
 }
 
-// ---- Column mutations (used fully in M4/M5) --------------------------
+// ---- Column mutations ------------------------------------------------
+// All three endpoints return the FULL refreshed ReviewResponse, so onSuccess
+// seeds the query cache directly (the new/edited column is immediately visible).
+
+type RollbackCtx = { previous?: ReviewResponse };
 
 export function useAddColumn(
     preset: string,
     reviewId: number | undefined,
-): UseMutationResult<AiColumn, Error, ColumnInput> {
+): UseMutationResult<ReviewResponse, Error, ColumnInput> {
     const qc = useQueryClient();
     return useMutation({
         mutationFn: (col: ColumnInput) => {
             if (reviewId == null) throw new Error('Review not loaded');
             return addColumn(reviewId, col);
         },
-        onSuccess: () => {
+        onSuccess: (review) => {
+            qc.setQueryData<ReviewResponse>(queryKeys.review(preset), review);
             void qc.invalidateQueries({ queryKey: queryKeys.review(preset) });
         },
     });
@@ -75,7 +79,7 @@ export function useAddColumn(
 export function useUpdateColumn(
     preset: string,
     reviewId: number | undefined,
-): UseMutationResult<AiColumn, Error, { index: number; col: Partial<ColumnInput> }> {
+): UseMutationResult<ReviewResponse, Error, { index: number; col: Partial<ColumnInput> }, RollbackCtx> {
     const qc = useQueryClient();
     return useMutation({
         mutationFn: ({ index, col }: { index: number; col: Partial<ColumnInput> }) => {
@@ -83,7 +87,7 @@ export function useUpdateColumn(
             return updateColumn(reviewId, index, col);
         },
         // Optimistic: patch the cached column in place, roll back on error.
-        onMutate: async ({ index, col }) => {
+        onMutate: async ({ index, col }): Promise<RollbackCtx> => {
             await qc.cancelQueries({ queryKey: queryKeys.review(preset) });
             const previous = qc.getQueryData<ReviewResponse>(queryKeys.review(preset));
             if (previous) {
@@ -97,10 +101,12 @@ export function useUpdateColumn(
             return { previous };
         },
         onError: (_err, _vars, context) => {
-            const ctx = context as { previous?: ReviewResponse } | undefined;
-            if (ctx?.previous) {
-                qc.setQueryData(queryKeys.review(preset), ctx.previous);
+            if (context?.previous) {
+                qc.setQueryData(queryKeys.review(preset), context.previous);
             }
+        },
+        onSuccess: (review) => {
+            qc.setQueryData<ReviewResponse>(queryKeys.review(preset), review);
         },
         onSettled: () => {
             void qc.invalidateQueries({ queryKey: queryKeys.review(preset) });
@@ -111,14 +117,14 @@ export function useUpdateColumn(
 export function useDeleteColumn(
     preset: string,
     reviewId: number | undefined,
-): UseMutationResult<void, Error, number> {
+): UseMutationResult<ReviewResponse, Error, number, RollbackCtx> {
     const qc = useQueryClient();
     return useMutation({
         mutationFn: (index: number) => {
             if (reviewId == null) throw new Error('Review not loaded');
             return deleteColumn(reviewId, index);
         },
-        onMutate: async (index: number) => {
+        onMutate: async (index: number): Promise<RollbackCtx> => {
             await qc.cancelQueries({ queryKey: queryKeys.review(preset) });
             const previous = qc.getQueryData<ReviewResponse>(queryKeys.review(preset));
             if (previous) {
@@ -130,10 +136,12 @@ export function useDeleteColumn(
             return { previous };
         },
         onError: (_err, _vars, context) => {
-            const ctx = context as { previous?: ReviewResponse } | undefined;
-            if (ctx?.previous) {
-                qc.setQueryData(queryKeys.review(preset), ctx.previous);
+            if (context?.previous) {
+                qc.setQueryData(queryKeys.review(preset), context.previous);
             }
+        },
+        onSuccess: (review) => {
+            qc.setQueryData<ReviewResponse>(queryKeys.review(preset), review);
         },
         onSettled: () => {
             void qc.invalidateQueries({ queryKey: queryKeys.review(preset) });

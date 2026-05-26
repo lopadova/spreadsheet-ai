@@ -37,15 +37,14 @@ default + Live toggle).
 - Pure-code tasks: PHPUnit/Vitest suffice. UI/UX tasks: Playwright is required too.
 
 ### Local Copilot review (step 2 — before push)
-Run the Copilot CLI in autopilot and pass it the **full branch diff vs `origin/main`** as context, invoking the **`/review`** skill explicitly (do NOT rely on open files or just changed-branch files — give it the complete diff so it has context):
+Write the **full branch diff vs `origin/main`** to a gitignored file (inline `$(git diff …)` overflows the OS arg limit on large diffs — see `docs/LESSON.md`), then tell the Copilot CLI to read it and invoke the **`/review`** skill (give it the complete diff, not just open/changed files):
 
 ```bash
-copilot --autopilot --yolo -p "/review the following COMPLETE diff of the current branch against origin/main. Check thoroughly for regressions, bugs, bad practices, security issues, and possible improvements, and report concrete fixes:
-
-$(git diff origin/main...HEAD)"
+git diff origin/main...HEAD > .review-diff.patch
+copilot --autopilot --yolo -p "Read .review-diff.patch (the COMPLETE diff of this branch vs origin/main). /review it for regressions, bugs, bad practices, security issues, and improvements; apply safe fixes and report the rest. Keep the test gates green."
 ```
 
-Fix every legitimate finding, re-run the local tests, re-run this local review, and loop until clean. Only then push. Record non-obvious findings in `docs/LESSON.md`.
+Fix every legitimate finding, re-run the local tests, re-run this local review, and loop until clean. Only then push. Record non-obvious findings in `docs/LESSON.md`. (`.review-diff.patch` is gitignored.)
 
 ### Requesting GitHub Copilot review (step 4)
 **Working method (verified PR #1):** the REST endpoint —

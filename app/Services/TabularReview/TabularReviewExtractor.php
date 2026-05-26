@@ -64,6 +64,7 @@ class TabularReviewExtractor
         string $rowId,
         ?Closure $onCell = null,
         ?array $columnIndexes = null,
+        bool $force = false,
     ): array {
         $columns = $this->normaliseColumns($review->columns_config ?? []);
 
@@ -73,6 +74,27 @@ class TabularReviewExtractor
                 static fn (int $idx) => in_array($idx, $columnIndexes, true),
                 ARRAY_FILTER_USE_KEY,
             );
+        }
+
+        // When not forced, skip cells already generated (status=ready) for this
+        // row so a re-run only fills missing/failed cells. `force=true` (the
+        // "Run all" / regenerate path) recomputes everything.
+        if (! $force && $columns !== []) {
+            $readyIndexes = TabularCell::query()
+                ->where('review_id', $review->id)
+                ->where('row_id', $rowId)
+                ->where('status', CellStatus::READY->value)
+                ->pluck('column_index')
+                ->map(static fn ($i) => (int) $i)
+                ->all();
+
+            if ($readyIndexes !== []) {
+                $columns = array_filter(
+                    $columns,
+                    static fn (int $idx) => ! in_array($idx, $readyIndexes, true),
+                    ARRAY_FILTER_USE_KEY,
+                );
+            }
         }
 
         if ($columns === []) {
@@ -187,8 +209,9 @@ class TabularReviewExtractor
      * Convenience iterator: extract every row of the review's preset.
      *
      * @param  list<int>|null  $columnIndexes
-     * @param  bool  $force  Reserved for a future "skip READY cells" optimisation.
-     *                        Currently a no-op: the atomic upsert always overwrites.
+     * @param  bool  $force  When false, cells already `ready` are skipped (only
+     *                        missing/failed are (re)generated). When true, every
+     *                        targeted cell is recomputed.
      * @return list<TabularCell>
      */
     public function extractReview(
@@ -203,7 +226,7 @@ class TabularReviewExtractor
         $all = [];
         foreach (array_values($rows) as $rowIndex => $row) {
             $rowId = $this->rowId($row, $rowIndex);
-            $cells = $this->extractRow($review, $row, $rowIndex, $rowId, $onCell, $columnIndexes);
+            $cells = $this->extractRow($review, $row, $rowIndex, $rowId, $onCell, $columnIndexes, $force);
             foreach ($cells as $cell) {
                 $all[] = $cell;
             }

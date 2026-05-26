@@ -3,6 +3,15 @@
 Non-obvious facts, fixes, and gotchas. Append dated entries (`YYYY-MM-DD`),
 most recent first. Every new session and sub-agent should read this.
 
+## 2026-05-26 — PR #1–#5 user-review fixes (applied)
+User did a deep review of the first 5 merged PRs. Fixes applied (on the M5 branch → main):
+- **Docs**: removed the inaccurate GraphQL `requestReviewsByLogin` claim from the reference-repo note in LESSON (the REST method is the only one that works); AGENTS local-review command no longer uses inline `$(git diff)` (arg-overflow) — it writes `.review-diff.patch` and Copilot reads it. (SKILL/plan/AGENTS GraphQL refs were already fixed earlier on this branch.)
+- **`workflows` UNIQUE (tenant_id, preset_key)**: added (was only an index). `BuiltinWorkflowSeeder` already keys `updateOrCreate` on (tenant_id, preset_key) so no collision; `WorkflowFactory.preset_key` defaulted to `null` (NULLs distinct) so factory rows never collide.
+- **`force` is now functional** (was a documented no-op): `extractRow($force)` skips cells already `ready` unless forced; `StreamController` reads `?force=1` (the UI always sends it for Run all / regenerate) and passes it through.
+- **TopChrome a11y**: replaced fake `href="#"` nav links with `<button aria-disabled>` inside a `<nav>`.
+- **Client typing debt**: `addColumn/updateColumn/deleteColumn` now typed `Promise<ReviewResponse>` (they return the full re-hydrated payload, incl. delete — not `void`); mutation hooks use an explicit `RollbackCtx` 4th generic (no more `context as …` cast) and `onSuccess` seeds the cache from the returned payload; `TabularPage` derives the new column index from the returned review (`lastColumnIndex`), not a stale local count.
+- **Process**: the "merge without CI/Copilot" anomaly is fixed by the strict gate added this milestone (CI green + Copilot reviewed + zero open comments before merge).
+
 ## 2026-05-26 — CI (first real run) gotchas
 - **phpunit before build → ViteManifestNotFoundException**: a feature test hitting `/` renders `app.blade.php` (`@vite()`), which needs `public/build/manifest.json`. CI runs phpunit before `npm run build` → 500. Fix: `$this->withoutVite()` in any view-rendering feature test (don't depend on built assets). Verified by removing `public/build` locally.
 - **`npm ci` fails on Linux CI with a Windows-generated lockfile**: "Missing: @emnapi/core@… from lock file" — the lockfile (npm 11, Windows) omits Linux-only optional native deps (transitive of Vite 8 / rolldown). Fix: use `npm install --no-audit --no-fund` in CI instead of `npm ci`. (Reference repo hit similar npm/lockfile cross-version issues.)
@@ -94,7 +103,7 @@ See `docs/plan.md §1.A` for the full annotated list (findings 1–9 with task a
 ### Reference repo process gotchas (`product_image_discovery_admin/docs/LESSON.md`)
 - Windows: `php`/`composer` may be off PATH; Herd PHP at `%USERPROFILE%\.config\herd\bin\php84\php.exe`; set `PHP_BINARY`. Don't use XAMPP.
 - Creating `.agents/skills/` was sandbox-blocked there; they used a repo-local `skills/` dir. We use `.claude/skills/` and fall back to `skills/` if blocked.
-- Copilot reviewer request can fail before requesting if token lacks `read:project` → GraphQL `requestReviewsByLogin` fallback.
+- Copilot reviewer request: the reference repo claimed a GraphQL `requestReviewsByLogin` fallback — that was INACCURATE (no such mutation). The working method is the REST `requested_reviewers` endpoint (see the verified entry below).
 - Vite/Vitest on Windows: `spawn EPERM` issues fixed by recent Vite/Vitest; use `pool: 'threads'` (forks still spawned child processes).
 - CI must make demo data deterministic (fake providers / mock LLM) — our Mock mode is the determinism lever for Playwright.
 

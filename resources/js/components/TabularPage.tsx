@@ -24,12 +24,17 @@ import { DEFAULT_PRESET, presetMeta } from '../lib/presets';
 import { AgenticGrid } from '../grid/AgenticGrid';
 import { useSseGeneration } from '../grid/useSseGeneration';
 import { selectedAiColumnIndexes } from '../grid/selection';
-import type { AiColumn, ColumnInput, Suggestion } from '../api/client';
+import type { AiColumn, ColumnInput, ReviewResponse, Suggestion } from '../api/client';
 
 const EMPTY_SELECTION: GridSelection = {
     columns: CompactSelection.empty(),
     rows: CompactSelection.empty(),
 };
+
+/** Highest AI-column index in a review payload (the just-appended column). */
+function lastColumnIndex(review: ReviewResponse): number {
+    return review.columns.reduce((max, c) => Math.max(max, c.index), -1);
+}
 
 export function TabularPage() {
     const [theme, setTheme] = useState<Theme>('dark');
@@ -123,20 +128,18 @@ export function TabularPage() {
                     },
                 );
             } else {
-                // The store endpoint appends at the current column count, so the
-                // new column's index is the present AI-column count. (It returns
-                // the full review payload, not a single AiColumn — see LESSON.)
-                const newIndex = aiColumns.length;
                 addColumn.mutate(payload, {
-                    onSuccess: () => {
-                        pendingRegenRef.current = newIndex;
+                    onSuccess: (review) => {
+                        // Derive the new column's index from the returned payload
+                        // (robust to prior deletes), not from a stale local count.
+                        pendingRegenRef.current = lastColumnIndex(review);
                         toast.push({ title: 'Colonna aggiunta', body: payload.name });
                     },
                 });
             }
             setEditorOpen(false);
         },
-        [addColumn, updateColumn, toast, aiColumns.length],
+        [addColumn, updateColumn, toast],
     );
 
     const handleEditorDelete = useCallback(
@@ -154,7 +157,6 @@ export function TabularPage() {
     // ---- AI Suggest ---------------------------------------------------
     const onPickSuggestion = useCallback(
         (s: Suggestion) => {
-            const newIndex = aiColumns.length;
             addColumn.mutate(
                 {
                     name: s.name,
@@ -163,14 +165,14 @@ export function TabularPage() {
                     enum_values: s.enum_values,
                 },
                 {
-                    onSuccess: () => {
-                        pendingRegenRef.current = newIndex;
+                    onSuccess: (review) => {
+                        pendingRegenRef.current = lastColumnIndex(review);
                         toast.push({ title: 'AI Suggest', body: `Colonna "${s.name}" aggiunta` });
                     },
                 },
             );
         },
-        [addColumn, toast, aiColumns.length],
+        [addColumn, toast],
     );
 
     // ---- Cell side-panel ----------------------------------------------
