@@ -3,6 +3,11 @@
 Non-obvious facts, fixes, and gotchas. Append dated entries (`YYYY-MM-DD`),
 most recent first. Every new session and sub-agent should read this.
 
+## 2026-05-26 — CI (first real run) gotchas
+- **phpunit before build → ViteManifestNotFoundException**: a feature test hitting `/` renders `app.blade.php` (`@vite()`), which needs `public/build/manifest.json`. CI runs phpunit before `npm run build` → 500. Fix: `$this->withoutVite()` in any view-rendering feature test (don't depend on built assets). Verified by removing `public/build` locally.
+- **`npm ci` fails on Linux CI with a Windows-generated lockfile**: "Missing: @emnapi/core@… from lock file" — the lockfile (npm 11, Windows) omits Linux-only optional native deps (transitive of Vite 8 / rolldown). Fix: use `npm install --no-audit --no-fund` in CI instead of `npm ci`. (Reference repo hit similar npm/lockfile cross-version issues.)
+- CI triggers on both `pull_request` and `push` → two runs per PR; both must be green.
+
 ## 2026-05-26 — M5 interactions local review findings (applied)
 
 - **`ColumnEditor` missing Escape handler + initial focus**: `role="dialog" aria-modal="true"` without an Escape listener is an ARIA violation. Fixed: added `useEffect` on `[open, onClose]` that attaches/removes a `keydown → Escape → onClose()` handler. Also added `autoFocus` on the Label input so focus lands inside the drawer on open.
