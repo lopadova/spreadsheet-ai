@@ -8,7 +8,7 @@
 // the live cell from the shared store so a Regenerate re-stream updates it.
 // ============================================================
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { AiColumn, Cell } from '../api/client';
 import { formatIcon } from '../lib/formats';
 import { citationText, normaliseFlag, valueToText, type Flag } from '../grid/format';
@@ -78,6 +78,16 @@ export function CellSidePanel({
 }: CellSidePanelProps) {
     const [promptOpen, setPromptOpen] = useState(false);
     const [copied, setCopied] = useState(false);
+
+    // Close on Escape; guard so the effect only attaches when the panel is open.
+    useEffect(() => {
+        if (!open || selection == null) return;
+        const onKey = (e: KeyboardEvent) => {
+            if (e.key === 'Escape') onClose();
+        };
+        document.addEventListener('keydown', onKey);
+        return () => document.removeEventListener('keydown', onKey);
+    }, [open, selection, onClose]);
 
     if (!open || selection == null) return null;
 

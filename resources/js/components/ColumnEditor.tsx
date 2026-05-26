@@ -10,7 +10,7 @@
 // payload-building logic unit-testable without TanStack Query / EventSource.
 // ============================================================
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { ALL_FORMAT_KEYS, FORMATS, autoGeneratePrompt } from '../lib/formats';
 import type { AiColumn, ColumnInput } from '../api/client';
 
@@ -118,14 +118,27 @@ export function ColumnEditor({
         setAutogen(false);
     }, [open, mode, column]);
 
+    // Close on Escape (dialog role requires it per ARIA spec).
+    useEffect(() => {
+        if (!open) return;
+        const onKey = (e: KeyboardEvent) => {
+            if (e.key === 'Escape') onClose();
+        };
+        document.addEventListener('keydown', onKey);
+        return () => document.removeEventListener('keydown', onKey);
+    }, [open, onClose]);
+
     const isJsonPath = format === 'json_path';
 
+    const autogenTimerRef = useRef<number | null>(null);
     const autoGenerate = () => {
+        if (autogenTimerRef.current != null) clearTimeout(autogenTimerRef.current);
         setAutogen(true);
         // Match the prototype's short async feel; purely client-side.
-        window.setTimeout(() => {
+        autogenTimerRef.current = window.setTimeout(() => {
             setPrompt(autoGeneratePrompt(format, name));
             setAutogen(false);
+            autogenTimerRef.current = null;
         }, 120);
     };
 
@@ -180,6 +193,8 @@ export function ColumnEditor({
                             value={name}
                             onChange={(e) => setName(e.target.value)}
                             placeholder="Es. Risk score frode"
+                            // eslint-disable-next-line jsx-a11y/no-autofocus
+                            autoFocus
                         />
                     </div>
 

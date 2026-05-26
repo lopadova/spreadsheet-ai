@@ -3,7 +3,17 @@
 Non-obvious facts, fixes, and gotchas. Append dated entries (`YYYY-MM-DD`),
 most recent first. Every new session and sub-agent should read this.
 
-## 2026-05-26 — M4 local Copilot review findings (applied)
+## 2026-05-26 — M5 interactions local review findings (applied)
+
+- **`ColumnEditor` missing Escape handler + initial focus**: `role="dialog" aria-modal="true"` without an Escape listener is an ARIA violation. Fixed: added `useEffect` on `[open, onClose]` that attaches/removes a `keydown → Escape → onClose()` handler. Also added `autoFocus` on the Label input so focus lands inside the drawer on open.
+- **`CellSidePanel` missing Escape handler**: `<aside>` panels should close on Escape. Fixed: same `useEffect` pattern on `[open, selection, onClose]`.
+- **`autoGenerate` setTimeout not cancelled on re-click**: If the user clicks "Auto-generate" twice quickly, two overlapping timers ran (second would overwrite first). Fixed: store the timer ID in a `useRef<number | null>` and `clearTimeout` before scheduling a new one.
+- **`window.setTimeout` return type vs Node `Timeout`**: `autogenTimerRef` initially typed as `ReturnType<typeof window.setTimeout>` which TypeScript (with `"types": ["node"]` in tsconfig) resolves to `NodeJS.Timeout` instead of `number`. Fix: type as `number | null` explicitly. Note: the tsconfig `"types": [...]` array includes `"node"`, which shadows the browser `setTimeout` return type for `ReturnType<typeof window.setTimeout>` in ambiguous contexts.
+- **`React.CSSProperties` in `AiSuggestPopover` without React import** — Works at runtime (and typecheck passes) because `@types/react` is a transitive dependency and TypeScript resolves the `React` namespace. But it is fragile and relies on ambient injection. Marked as risky (no change needed now; watch for `isolatedModules` stricter enforcement).
+- **`pendingRegenRef` index prediction after deletes (risky — not applied)**: `newIndex = aiColumns.length` is correct only when the server assigns `column_index` equal to the current count (no gaps from prior deletes). If the server ever reuses indices or skips, the effect would wait forever. For the demo (no concurrent add+delete sequences), this is safe. Verify `ColumnController::store` always appends at `count(ai_columns)`.
+- **`pendingRegenRef` single-slot race (risky — not applied)**: Two rapid add-column mutations would overwrite the ref; only the second column would auto-regenerate. Acceptable for the demo; a queue would be needed for production.
+
+
 - **`drawPercentage` — zero-width fill bar path**: when `pct = 0` (null value or explicit 0), `roundRect` was called with `w = 0` → degenerate path drawn to canvas (harmless but invalid). Fixed: guard `if (pct > 0)` before drawing the fill bar.
 - **`drawJsonPath` — unused `theme` destructuring + `void theme` suppression**: `theme` was extracted from `d` but never used directly (it flows through `{ ...d }` to sub-renderers). Removed the destructure; `void theme` suppression no longer needed.
 - **Citation registry clear: `useEffect` (async) vs. render-time (sync)**: using `useEffect` to clear the `CitationRegistry` on preset change means the registry is cleared AFTER the first render with the new preset, potentially assigning citation indices starting from the old `next` counter rather than 1. Fixed: replaced `useEffect` with a render-phase previous-value comparison (`prevPresetRef`) so the registry is cleared synchronously before `getCellContent` is called for the new preset. Removed the now-unused `useEffect` import from `AgenticGrid.tsx`.
