@@ -7,7 +7,7 @@ function readyCell(rowId: string, columnIndex: number, summary: unknown, flag = 
     return {
         row_id: rowId,
         column_index: columnIndex,
-        content: { summary: summary as string | null, flag, reasoning: null, citations: null },
+        content: { summary, flag, reasoning: null, citations: null },
         flag,
         confidence: 0.9,
         status: 'ready',

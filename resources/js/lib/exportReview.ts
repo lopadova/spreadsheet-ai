@@ -3,9 +3,9 @@
 //
 // Maps the loaded review (base columns + AI columns + rows) plus the cell store
 // into a header row + a body matrix suitable for `toCsv`. One CSV row per
-// entity. Each AI cell's value is the rendered text of `content.summary` via
-// `valueToText`, matching what the grid mirror shows (incl. the rating "n/5"
-// special-case). Generating / pending / missing cells export as empty.
+// entity. Each AI cell's value uses the shared `cellDisplayText` helper (the
+// single source of truth also used by the grid mirror), so export text always
+// matches the grid (rating "n/5", "—" for null, empty for generating/pending).
 // ============================================================
 
 import type { AiColumn, BaseColumn, Cell, Row } from '../api/client';
