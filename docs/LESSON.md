@@ -3,6 +3,22 @@
 Non-obvious facts, fixes, and gotchas. Append dated entries (`YYYY-MM-DD`),
 most recent first. Every new session and sub-agent should read this.
 
+## 2026-05-26 — M1 backend foundation (schema, models, seeders, config)
+- `laravel/ai v0.6.7` has a built-in `anthropic` provider (config `vendor/laravel/ai/config/ai.php`); no custom provider needed. `config/ai.php` copied with `default => 'anthropic'`. Demo config in `config/tabular.php` (mock/provider/model/sse_pacing_ms/max_tokens/temperature).
+- SQL reserved word: the returns table is named `returns_rows` (model `ReturnRow`) to avoid `returns`.
+- Money: prototype amounts like `€2.149,00` are Italian-format (dot=thousands, comma=decimal). `EcommerceDemoSeeder::toCents()` strips non-numerics, drops dots when a comma is present, then ×100. Money stored as integer cents everywhere.
+- Preset single source of truth: `app/Support/TabularReview/PresetData.php` ports all 5 presets (base_cols, ai_cols, rows, cooked cells normalized to `{value,flag,citation}`) from `data.jsx`. M2 mock extractor will read cooked cells from here.
+- Seeded counts (asserted in `SeederTest`): 24 customers, 24 orders (10 fraud + 14 `ORD-R*`), 14 return rows, 16-format showcase workflow present; 5 system workflows. Idempotent via `updateOrCreate` (incl. `WHERE article_id IS NULL` for order_items).
+- `php artisan test` is intercepted by a hook emitting a JSON line; for a human-readable per-test breakdown run `vendor/phpunit/phpunit/phpunit --testdox` via Herd PHP.
+- Laravel 13 skeleton uses attribute-based model config (`#[Fillable]`); domain models use the conventional `protected $fillable` + `casts()` style — both valid.
+
+## 2026-05-26 — M1 frontend foundation (React 19 + Vite 8 + Tailwind v4)
+- **Windows case-insensitive FS**: `app.tsx` (Vite entry) and `App.tsx` collide as the same file. Component lives in `resources/js/AppRoot.tsx`; entry `app.tsx` imports `./AppRoot`.
+- **Vitest 3.2.4 bundles Vite 7 (rollup); project runs Vite 8 (rolldown)** → `@vitejs/plugin-react` Plugin types diverge and break `tsc`. Runtime fine; cast the plugins array to `ViteUserConfig['plugins']` in `vitest.config.ts`. Drop when Vitest ships Vite 8.
+- **CSS `@import` order**: Google Fonts `@import url(...)` must precede `@import 'tailwindcss';` or the build warns ("@import rules must precede all rules").
+- **Playwright e2e prereq**: `npm run build` must run before `npm run e2e` (Playwright serves built Vite assets via the manifest). The `/` route is DB-free so e2e is independent of backend migrations. Playwright auto-starts `artisan serve` on 127.0.0.1:8123 (`reuseExistingServer`), chromium-only.
+- **composer.bat in background PowerShell** failed with a generic "file not found"; calling `php84\php.exe composer.phar …` explicitly works. Also a malformed version constraint can create a stray file named after the constraint (`0.6`) — delete it.
+
 ## 2026-05-26 — Seeded from source analysis (before any code)
 
 ### `laravel/ai` SDK surface (from AskMyDocs `app/Ai`)

@@ -1,0 +1,208 @@
+@import url('https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Geist+Mono:wght@400;500;600&display=swap');
+@import 'tailwindcss';
+
+@source '../**/*.blade.php';
+@source '../js/**/*.{ts,tsx}';
+
+/* ============================================================
+   Tabular Review — design tokens (ported from prototype styles.css)
+   Dual theme; dark is the default (set via [data-theme="dark"]).
+   ============================================================ */
+
+:root {
+    /* Type */
+    --font-sans: 'Geist', ui-sans-serif, system-ui, -apple-system, sans-serif;
+    --font-mono: 'Geist Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+
+    /* Sizing — high-but-breathable density */
+    --row-h: 40px;
+    --row-h-tight: 32px;
+    --topbar-h: 48px;
+    --sidebar-w: 232px;
+    --radius-xs: 4px;
+    --radius-sm: 6px;
+    --radius-md: 8px;
+
+    /* Light theme (default) */
+    --bg: #fafafa;
+    --bg-elevated: #ffffff;
+    --bg-subtle: #f4f4f5;
+    --bg-hover: #f0f0f1;
+    --bg-active: #e8e8ea;
+    --bg-overlay: rgba(0, 0, 0, 0.32);
+
+    --border: #e7e7e9;
+    --border-strong: #d4d4d8;
+    --border-focus: #18181b;
+
+    --text: #18181b;
+    --text-secondary: #52525b;
+    --text-tertiary: #8a8a93;
+    --text-disabled: #b8b8be;
+    --text-inverse: #ffffff;
+
+    --accent: oklch(0.62 0.21 280);
+    --accent-hover: oklch(0.56 0.21 280);
+    --accent-bg: oklch(0.62 0.21 280 / 0.08);
+    --accent-border: oklch(0.62 0.21 280 / 0.24);
+
+    --status-running: #0066ff;
+    --status-running-bg: rgba(0, 102, 255, 0.08);
+    --status-success: #10b981;
+    --status-success-bg: rgba(16, 185, 129, 0.08);
+    --status-failed: #ef4444;
+    --status-failed-bg: rgba(239, 68, 68, 0.08);
+    --status-paused: #f59e0b;
+    --status-paused-bg: rgba(245, 158, 11, 0.08);
+    --status-pending: #71717a;
+    --status-pending-bg: rgba(113, 113, 122, 0.08);
+
+    --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.04);
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
+    --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08), 0 2px 4px rgba(0, 0, 0, 0.04);
+    --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.12), 0 4px 8px rgba(0, 0, 0, 0.04);
+    --shadow-overlay: 0 24px 64px rgba(0, 0, 0, 0.18), 0 8px 16px rgba(0, 0, 0, 0.08);
+}
+
+[data-theme='dark'] {
+    --bg: #0a0a0b;
+    --bg-elevated: #111113;
+    --bg-subtle: #161618;
+    --bg-hover: #1c1c1f;
+    --bg-active: #232327;
+    --bg-overlay: rgba(0, 0, 0, 0.6);
+
+    --border: #232327;
+    --border-strong: #2e2e33;
+    --border-focus: #fafafa;
+
+    --text: #f5f5f7;
+    --text-secondary: #a1a1a8;
+    --text-tertiary: #6e6e76;
+    --text-disabled: #45454c;
+    --text-inverse: #18181b;
+
+    --accent: oklch(0.7 0.19 285);
+    --accent-hover: oklch(0.78 0.17 285);
+    --accent-bg: oklch(0.7 0.19 285 / 0.12);
+    --accent-border: oklch(0.7 0.19 285 / 0.3);
+
+    --status-running: #3b82f6;
+    --status-running-bg: rgba(59, 130, 246, 0.12);
+    --status-success: #10b981;
+    --status-success-bg: rgba(16, 185, 129, 0.12);
+    --status-failed: #ef4444;
+    --status-failed-bg: rgba(239, 68, 68, 0.12);
+    --status-paused: #f59e0b;
+    --status-paused-bg: rgba(245, 158, 11, 0.12);
+    --status-pending: #71717a;
+    --status-pending-bg: rgba(113, 113, 122, 0.14);
+
+    --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.4);
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.5), 0 1px 2px rgba(0, 0, 0, 0.3);
+    --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.5), 0 2px 4px rgba(0, 0, 0, 0.3);
+    --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.55), 0 4px 8px rgba(0, 0, 0, 0.3);
+    --shadow-overlay: 0 24px 64px rgba(0, 0, 0, 0.7), 0 8px 16px rgba(0, 0, 0, 0.4);
+}
+
+/* Expose tokens to Tailwind v4 utilities/theme */
+@theme inline {
+    --font-sans: var(--font-sans);
+    --font-mono: var(--font-mono);
+    --color-bg: var(--bg);
+    --color-bg-elevated: var(--bg-elevated);
+    --color-border: var(--border);
+    --color-text: var(--text);
+    --color-accent: var(--accent);
+}
+
+* {
+    box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-sans);
+    font-size: 13px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11', 'ss01';
+}
+
+::selection {
+    background: var(--accent-bg);
+    color: var(--text);
+}
+
+/* ============== M1 placeholder hero ============== */
+.app-hero {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 32px;
+    background:
+        radial-gradient(60% 80% at 50% -10%, var(--accent-bg), transparent 70%),
+        var(--bg);
+}
+
+.app-hero__card {
+    max-width: 540px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    padding: 40px 36px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    background: var(--bg-elevated);
+    box-shadow: var(--shadow-lg);
+}
+
+.app-hero__badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 12px;
+    border: 1px solid var(--accent-border);
+    border-radius: 999px;
+    background: var(--accent-bg);
+    color: var(--accent);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.app-hero__dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 999px;
+    background: var(--status-success);
+    box-shadow: 0 0 0 3px var(--status-success-bg);
+}
+
+.app-hero__title {
+    margin: 0;
+    font-size: 28px;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    color: var(--text);
+}
+
+.app-hero__subtitle {
+    margin: 0;
+    max-width: 42ch;
+    font-size: 14px;
+    line-height: 1.6;
+    color: var(--text-secondary);
+}
