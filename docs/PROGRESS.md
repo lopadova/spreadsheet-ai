@@ -47,7 +47,16 @@ Live "where am I" log. Newest first. Resume from the top after any interruption.
 - **Strict CI+Copilot loop validated**: CI green (after fixing Vite-manifest + npm-lockfile CI issues) AND GitHub Copilot reviewed across **6 rounds** (8→2→2→2→1→2 findings, all real & fixed: regen structural-sharing bug, editor close-on-success, validation, timer cleanup, gridSelection clearing on preset-switch/delete, test hygiene). All threads resolved before merge.
 - User-review fixes of PR #1–#5 also landed here (workflows UNIQUE, functional `force`, TopChrome buttons, client ReviewResponse typing, doc fixes).
 
+### M6 outcome — MERGED (PR #7)
+- CSV export (formula-neutralized) + polish (a11y, no-overflow at 125/150% zoom). Vitest 112, e2e 17/17. Strict loop: CI green (after fixing a Linux-only grid flex `min-width:0` overflow) + **6 Copilot rounds** all resolved.
+
+### M7 — release (in progress)
+- CI already live (added M5). WOW community README written (badges, banner, screenshots, MikeOSS credit, junior quickstart). LESSON distilled into `docs/RULES.md` hard-won rules. License resolved: kept Apache-2.0, README accurate. Next: tag `v0.1.0` + GitHub release.
+
+### BUILD STATUS: M0–M6 all merged to `main`; M7 finalizing.
+
 ### Next
+
 - **M6 — Presets, polish, export** (in progress): verify 5 presets end-to-end (done via PresetData), polish/skeletons/empty-states/a11y, no-overflow at 125%/150% zoom, CSV export (formula-neutralized) replacing the Export stub. Vitest + Playwright.
 
 - **M5 — Column editor, AI Suggest, bulk, citation panel** (in progress): editor drawer (17-format picker, enum input, prompt textarea, Auto-generate, json_path help, cost card) → Save → regenerate column via SSE; add/delete column; AI Suggest full picker → add+generate; cell click → citation side-panel (value/flag/reasoning/citation/prompt + Regenerate + Copy); Glide multi-select → bulk regenerate. Vitest + Playwright every interaction.
