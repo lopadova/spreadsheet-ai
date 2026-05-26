@@ -18,6 +18,7 @@ import {
     type DataEditorRef,
     type GridCell,
     type GridColumn,
+    type GridSelection,
     type Item,
 } from '@glideapps/glide-data-grid';
 import '@glideapps/glide-data-grid/dist/index.css';
@@ -44,6 +45,18 @@ interface AgenticGridProps {
     gridRef: React.RefObject<DataEditorRef | null>;
     loading?: boolean;
     onEditColumn?: (column: AiColumn) => void;
+    /** Click a generated AI cell → open the side-panel for (row_id, columnIndex). */
+    onCellClicked?: (rowId: string, columnIndex: number) => void;
+    /** Current grid selection (controlled), for bulk regenerate. */
+    gridSelection?: GridSelection;
+    onGridSelectionChange?: (sel: GridSelection) => void;
+    /**
+     * Toggle whole-column selection for an AI column (keyboard-accessible
+     * mirror of canvas column-select). Receives the Glide grid column index.
+     */
+    onToggleColumnSelect?: (gridColumn: number) => void;
+    /** Set of currently-selected Glide grid column indexes (for the mirror). */
+    selectedGridColumns?: ReadonlySet<number>;
     themeVersion?: number;
 }
 
@@ -60,6 +73,11 @@ export function AgenticGrid({
     gridRef,
     loading = false,
     onEditColumn,
+    onCellClicked,
+    gridSelection,
+    onGridSelectionChange,
+    onToggleColumnSelect,
+    selectedGridColumns,
     themeVersion = 0,
 }: AgenticGridProps) {
     const { cells } = useCellStore(store);
@@ -157,6 +175,17 @@ export function AgenticGrid({
         [baseCount, columns, onEditColumn],
     );
 
+    const handleCellClicked = useCallback(
+        ([col, row]: Item) => {
+            if (col < baseCount) return; // base columns aren't AI cells
+            const aiCol = columns[col - baseCount];
+            const r = rows[row];
+            if (aiCol == null || r == null) return;
+            onCellClicked?.(r.row_id, aiCol.index);
+        },
+        [baseCount, columns, rows, onCellClicked],
+    );
+
     if (loading) {
         return (
             <div className="agentic-grid-wrap" aria-busy="true">
@@ -179,6 +208,11 @@ export function AgenticGrid({
                 rows={rows.length}
                 customRenderers={[agenticCellRenderer]}
                 onHeaderClicked={onHeaderClicked}
+                onCellClicked={handleCellClicked}
+                gridSelection={gridSelection}
+                onGridSelectionChange={onGridSelectionChange}
+                columnSelect="multi"
+                rangeSelect="multi-rect"
                 rowMarkers="both"
                 rowHeight={40}
                 headerHeight={40}
@@ -195,6 +229,11 @@ export function AgenticGrid({
                 columns={columns}
                 rows={rows}
                 cells={cells}
+                onEditColumn={onEditColumn}
+                onCellClicked={onCellClicked}
+                onToggleColumnSelect={onToggleColumnSelect}
+                selectedGridColumns={selectedGridColumns}
+                baseCount={baseCount}
             />
         </div>
     );
@@ -210,6 +249,13 @@ interface GridMirrorProps {
     columns: AiColumn[];
     rows: Row[];
     cells: ReadonlyMap<string, Cell>;
+    /** Edit a column (mirrors the canvas header pencil; keyboard-accessible). */
+    onEditColumn?: (column: AiColumn) => void;
+    /** Open the cell side-panel (mirrors a canvas cell click). */
+    onCellClicked?: (rowId: string, columnIndex: number) => void;
+    onToggleColumnSelect?: (gridColumn: number) => void;
+    selectedGridColumns?: ReadonlySet<number>;
+    baseCount: number;
 }
 
 function mirrorCellText(cell: Cell | undefined, col: AiColumn): string {
@@ -224,7 +270,17 @@ function mirrorCellText(cell: Cell | undefined, col: AiColumn): string {
     return valueToText(value);
 }
 
-function GridMirror({ baseColumns, columns, rows, cells }: GridMirrorProps) {
+function GridMirror({
+    baseColumns,
+    columns,
+    rows,
+    cells,
+    onEditColumn,
+    onCellClicked,
+    onToggleColumnSelect,
+    selectedGridColumns,
+    baseCount,
+}: GridMirrorProps) {
     let filled = 0;
     for (const cell of cells.values()) {
         if (cell.status !== 'generating' && cell.status !== 'pending' && cell.content?.summary != null) {
@@ -239,11 +295,36 @@ function GridMirror({ baseColumns, columns, rows, cells }: GridMirrorProps) {
                     {baseColumns.map((c) => (
                         <th key={`b:${c.id}`} scope="col">{c.name}</th>
                     ))}
-                    {columns.map((c) => (
-                        <th key={`a:${c.index}`} scope="col" data-format={c.format}>
-                            {c.name}
-                        </th>
-                    ))}
+                    {columns.map((c, pos) => {
+                        const gridCol = baseCount + pos;
+                        return (
+                            <th key={`a:${c.index}`} scope="col" data-format={c.format}>
+                                {c.name}
+                                {onEditColumn && (
+                                    <button
+                                        type="button"
+                                        data-testid={`edit-col-${c.index}`}
+                                        aria-label={`Edit column ${c.name}`}
+                                        title={`Edit column ${c.name}`}
+                                        onClick={() => onEditColumn(c)}
+                                    >
+                                        ✎
+                                    </button>
+                                )}
+                                {onToggleColumnSelect && (
+                                    <button
+                                        type="button"
+                                        data-testid={`select-col-${c.index}`}
+                                        aria-label={`Select column ${c.name}`}
+                                        aria-pressed={selectedGridColumns?.has(gridCol) ?? false}
+                                        onClick={() => onToggleColumnSelect(gridCol)}
+                                    >
+                                        ☑
+                                    </button>
+                                )}
+                            </th>
+                        );
+                    })}
                 </tr>
             </thead>
             <tbody>
@@ -255,6 +336,10 @@ function GridMirror({ baseColumns, columns, rows, cells }: GridMirrorProps) {
                         {columns.map((c) => {
                             const cell = cells.get(cellKey(row.row_id, c.index));
                             const text = mirrorCellText(cell, c);
+                            const ready =
+                                cell != null &&
+                                cell.status !== 'generating' &&
+                                cell.status !== 'pending';
                             return (
                                 <td
                                     key={`a:${c.index}`}
@@ -264,7 +349,18 @@ function GridMirror({ baseColumns, columns, rows, cells }: GridMirrorProps) {
                                     data-status={cell?.status ?? 'empty'}
                                     title={truncate(text, 80)}
                                 >
-                                    {text}
+                                    {onCellClicked && ready ? (
+                                        <button
+                                            type="button"
+                                            data-testid={`open-cell-${row.row_id}-${c.index}`}
+                                            aria-label={`Open ${c.name} for ${row.row_id}`}
+                                            onClick={() => onCellClicked(row.row_id, c.index)}
+                                        >
+                                            {text}
+                                        </button>
+                                    ) : (
+                                        text
+                                    )}
                                 </td>
                             );
                         })}
