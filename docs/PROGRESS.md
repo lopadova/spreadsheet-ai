@@ -31,8 +31,13 @@ Live "where am I" log. Newest first. Resume from the top after any interruption.
   7. `TabularReviewExtractor::extractReview` — documented the `$force` parameter as reserved/no-op.
 - All 162 tests green after fixes.
 
+### M2 outcome (2026-05-26) — MERGED (PR #3)
+- Backend engine: 17-format enum, JsonPathResolver, RowContextBuilder, FlagClassifier, TabularAiClient (laravel/ai `agent()->prompt()`), TabularReviewExtractor (Mock+Live, R14, atomic upsert), ReviewHydrator, REST API, synchronous SSE. **62 phpunit / 336 assertions.** Live API smoke OK. Local Copilot review applied; nested .gitignore restored + generated artifacts untracked. GitHub Copilot posted a transient/empty review.
+- **API contract**: `GET /api/reviews/{preset}` → `{review:{id,preset_key,title,row_source}, base_columns:[{id,name}], columns:[{index,name,prompt,format,enum_values?,json_path?}], rows:[{row_id,...displayFields}], cells:[{row_id,column_index,content,flag,confidence,status}], suggestions_available}`. `GET /api/suggest/{preset}` → `{preset, suggestions:[{name,format,prompt,enum_values?}]}`. Column CRUD: POST/PATCH/DELETE `/api/reviews/{id}/columns[/{index}]`. SSE: `GET /api/reviews/{id}/stream?cols=&force=`.
+- **TODO (M4)**: `base_columns` only returns `{id,name}` — width/align/mono lost vs prototype. Enrich the API (small backend tweak) or default widths client-side in M4.
+
 ### Next
-- **M2 — Backend Tabular engine** (in progress): FormatType/CellFlag/CellStatus enums, RowContextBuilder, JsonPathResolver, TabularReviewExtractor (batched laravel/ai + Mock from PresetData), FlagClassifier, REST API + FormRequests, synchronous SSE stream. PHPUnit guardrails. (Pure backend → no Playwright.)
+- **M3 — Frontend shell + page composition** (in progress): TopChrome, HeroBanner (stats), PresetChips, ActionBar (AI Suggest, Add column, Live/Mock toggle, Export, Share, Run all), StatusFooter; TanStack Query client + hooks on the M2 contract; cell store; placeholder grid region (real Glide grid = M4). Vitest + Playwright.
 
 ### Blockers
 - **GitHub Copilot PR review not serviced on this repo.** PR #1: REST request accepted (`Copilot`) but `reviewRequests` clears instantly, no review posted after 12+ min. Feature not enabled/entitled for `lopadova/spreadsheet-ai`. Policy adopted: bounded wait (~3–5 min) on GitHub Copilot, then rely on local Copilot `/review` + green local tests as the binding gate. Owner can enable "Copilot code review" in repo settings to make the GitHub gate real. (See `docs/LESSON.md`.)
