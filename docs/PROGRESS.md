@@ -42,7 +42,14 @@ Live "where am I" log. Newest first. Resume from the top after any interruption.
 ### M4 outcome (2026-05-26) — MERGED (PR #5)
 - Glide canvas grid + 17 renderers + live SSE (single EventSource, run-token guard, atomic updateCells, skeleton+progress) + a11y mirror table. Vitest 63, e2e 6/6, visual matches banner. Local Copilot review applied. SSE blocks single artisan-serve worker → Playwright workers:1.
 
+### M5 outcome (2026-05-26) — MERGED (PR #6) via FULL strict loop
+- Column editor (17-format picker, auto-generate, json_path, cost card, validation), AI Suggest picker, citation side-panel, bulk regenerate. Vitest 93, e2e 12/12.
+- **Strict CI+Copilot loop validated**: CI green (after fixing Vite-manifest + npm-lockfile CI issues) AND GitHub Copilot reviewed across **6 rounds** (8→2→2→2→1→2 findings, all real & fixed: regen structural-sharing bug, editor close-on-success, validation, timer cleanup, gridSelection clearing on preset-switch/delete, test hygiene). All threads resolved before merge.
+- User-review fixes of PR #1–#5 also landed here (workflows UNIQUE, functional `force`, TopChrome buttons, client ReviewResponse typing, doc fixes).
+
 ### Next
+- **M6 — Presets, polish, export** (in progress): verify 5 presets end-to-end (done via PresetData), polish/skeletons/empty-states/a11y, no-overflow at 125%/150% zoom, CSV export (formula-neutralized) replacing the Export stub. Vitest + Playwright.
+
 - **M5 — Column editor, AI Suggest, bulk, citation panel** (in progress): editor drawer (17-format picker, enum input, prompt textarea, Auto-generate, json_path help, cost card) → Save → regenerate column via SSE; add/delete column; AI Suggest full picker → add+generate; cell click → citation side-panel (value/flag/reasoning/citation/prompt + Regenerate + Copy); Glide multi-select → bulk regenerate. Vitest + Playwright every interaction.
 
 - **M4 — Glide Data Grid + 17 renderers + SSE consumer** (in progress): replace GridPlaceholder with @glideapps/glide-data-grid canvas; 17 custom cell renderers (fix prototype bugs: RJsonPath auto-detect, stable citation numbering, percentage NaN guard, url protocol); confidence dot + citation badge + flag tint; skeleton(Loading)+progress; single EventSource → atomic updateCells; run-token guard on preset switch; Run all/Stop. Vitest + Playwright.
