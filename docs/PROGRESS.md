@@ -50,14 +50,13 @@ Live "where am I" log. Newest first. Resume from the top after any interruption.
 ### M6 outcome — MERGED (PR #7)
 - CSV export (formula-neutralized) + polish (a11y, no-overflow at 125/150% zoom). Vitest 112, e2e 17/17. Strict loop: CI green (after fixing a Linux-only grid flex `min-width:0` overflow) + **6 Copilot rounds** all resolved.
 
-### M7 — release (in progress)
-- CI already live (added M5). WOW community README written (badges, banner, screenshots, MikeOSS credit, junior quickstart). LESSON distilled into `docs/RULES.md` hard-won rules. License resolved: kept Apache-2.0, README accurate. Next: tag `v0.1.0` + GitHub release.
+### M7 — release (DONE, MERGED PR #8)
+- CI live (added M5). WOW community README (badges, banner, screenshots, MikeOSS credit, junior quickstart). LESSON distilled into `docs/RULES.md`. License standardized on Apache-2.0 (incl. composer.json). **Tagged `v0.1.0` + GitHub release published.**
 
-### BUILD STATUS: M0–M7 ALL MERGED to `main`. Released v0.1.0. Closing to v1.0.0 (security bump + final verification).
+### BUILD STATUS: ✅ COMPLETE — M0–M7 all merged to `main`; `v0.1.0` released. v1.0.0 close-out (security bump) in PR #9.
 
-### Next
-
-- **M7 — tag `v0.1.0` + GitHub release** (in progress): WOW README merged; RULES.md distilled. Remaining: cut the tag, publish the GitHub release, fold LESSON back into AGENTS.md/CLAUDE.md/skills.
+### Done (close-out)
+- All 8 milestones merged via the strict gate (CI green + Copilot zero open comments). `v0.1.0` tagged & released. Security: `symfony/polyfill-intl-idn` bumped (CVE-2026-46644), `composer audit` clean. README verified WOW + aligned. Next: tag `v1.0.0`.
 
 ### Blockers
 - **GitHub Copilot PR review — RESOLVED understanding**: initially looked "not serviced" (PR #1: request cleared instantly), but from PR #3 onward it posts real inline reviews — just **slow/intermittent** (minutes). The bounded-wait "merge anyway" policy was **REVOKED**; binding gate is now CI green + Copilot reviewed with zero unresolved comments (see `docs/LESSON.md` + `docs/RULES.md`). Validated across M5–M7.
