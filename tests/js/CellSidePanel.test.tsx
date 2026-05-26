@@ -34,6 +34,7 @@ function renderPanel(overrides: Partial<Parameters<typeof CellSidePanel>[0]> = {
 
 afterEach(() => {
     vi.restoreAllMocks();
+    vi.unstubAllGlobals(); // restoreAllMocks does NOT undo vi.stubGlobal('navigator', …)
 });
 
 describe('CellSidePanel', () => {
