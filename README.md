@@ -22,6 +22,11 @@ cell‑by‑cell.
 
 ![Spreadsheet-AI — the agentic grid](resources/Tabular-Review-Banner.png)
 
+### ▶️ Live demo
+![Demo — pick a preset chip, Run all (cells stream in live), add an AI column](resources/demo.gif)
+
+*Pick a preset chip → **Run all** (cells stream in live, cell‑by‑cell) → add a new AI column. ([full‑quality WebM](resources/demo.webm))*
+
 </div>
 
 ---
