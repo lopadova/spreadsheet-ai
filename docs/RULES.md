@@ -69,6 +69,18 @@ Order per (sub)task: local tests green → **local Copilot review loop** → pus
 ## Documentation rules
 - Update `docs/PROGRESS.md` after meaningful work; `docs/LESSON.md` on non-obvious findings. Date entries `YYYY-MM-DD`.
 
+## Hard-won engineering rules (distilled from `docs/LESSON.md`, M1–M6)
+Apply these proactively to avoid repeating fixed mistakes:
+- **CI runs phpunit before `npm run build`** → any feature test that renders a `@vite()` Blade view must call `$this->withoutVite()`. Don't depend on built assets in PHP tests.
+- **Windows-generated `package-lock.json` omits Linux optional native deps** (Vite 8/rolldown) → CI uses `npm install`, not `npm ci`.
+- **`overflow-x: clip`** for no-overflow containers; never add an `overflow-x: hidden` fallback on a measured container (it forces `overflow-y: auto` → scrollbar → false overflow). Glide/grid flex wrappers need **`min-width: 0`** so the canvas sizes to the container, not its intrinsic column width.
+- **React Query structural sharing** can keep the same array reference after an optimistic update → effects keyed on that array may never fire. Trigger side-effects (e.g. regenerate) **directly in mutation `onSuccess`**, not via an effect watching the query data.
+- **Timers/EventSource**: store ids in a ref and clear on close/unmount/selection-change. Reset transient UI state (`copied`, `open`) when the selected entity changes.
+- **Drawers/dialogs**: close only on mutation success (keep input on error + toast); Escape handler + initial focus; client-side validation mirroring the backend FormRequest (avoid 422 round-trips).
+- **Types at the boundary**: cell `summary` is `unknown` (backend persists non-string JSON) — render via `valueToText`/`cellDisplayText`, never as a bare string. One shared pure function for grid + export (no duplicated display logic).
+- **Local `copilot --yolo`** edits + commits + `git add -A` (can sweep temp files) — gitignore `.review-diff.patch`; pass the diff via a file, not inline `$(git diff)`.
+- **GitHub Copilot review** is slow (minutes) and re-reviews on every push; resolve threads via GraphQL `resolveReviewThread`; merge only at CI-green + 0 unresolved, stable for several polls.
+
 ## Agent model rules
 - Sub-agents get disjoint write scopes. Hand each `docs/LESSON.md` + `docs/plan.md` + `docs/RULES.md` + `AGENTS.md`.
 - Main agent stays integrator + final reviewer + merger.
