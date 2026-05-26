@@ -90,19 +90,28 @@ test.describe('CSV export (M6.3)', () => {
         const fs = await import('node:fs/promises');
         const csv = await fs.readFile(path, 'utf8');
         const lines = csv.replace(/^\uFEFF/, '').split('\r\n').filter((l) => l.length > 0);
-        for (const line of lines) {
-            // Extract the FIRST field's content (unwrapping a quoted field) so a
-            // quoted "=\u2026" can't hide an un-neutralised formula behind a leading
-            // quote. A neutralised field begins with ' (apostrophe), never =,+,-,@.
-            let firstField: string;
-            if (line.startsWith('"')) {
-                const end = line.indexOf('"', 1);
-                firstField = end > 0 ? line.slice(1, end) : line.slice(1);
-            } else {
+        // RFC-4180-correct first-field extractor: a quoted field may contain
+        // escaped quotes ("") and commas, so we can't just split on the first
+        // quote/comma. This unwraps the first field's real content so a quoted
+        // "=\u2026" can't hide an un-neutralised formula behind a leading quote.
+        const firstField = (line: string): string => {
+            if (!line.startsWith('"')) {
                 const comma = line.indexOf(',');
-                firstField = comma >= 0 ? line.slice(0, comma) : line;
+                return comma >= 0 ? line.slice(0, comma) : line;
             }
-            expect(/^[=+\-@\t\r]/.test(firstField)).toBe(false);
+            let out = '';
+            for (let i = 1; i < line.length; i++) {
+                if (line[i] === '"') {
+                    if (line[i + 1] === '"') { out += '"'; i++; continue; }
+                    break; // closing quote
+                }
+                out += line[i];
+            }
+            return out;
+        };
+        for (const line of lines) {
+            // A neutralised field begins with ' (apostrophe), never =,+,-,@,tab,CR.
+            expect(/^[=+\-@\t\r]/.test(firstField(line))).toBe(false);
         }
         // Header row present.
         expect(lines[0]).toMatch(/Reso|Cliente|Motivo|ID/i);

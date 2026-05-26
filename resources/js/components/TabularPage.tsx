@@ -196,8 +196,9 @@ export function TabularPage() {
 
     // ---- CSV export ---------------------------------------------------
     const handleExport = useCallback(() => {
-        // Guard: don't export an empty/partial CSV while the review is still
-        // loading or errored (the Export button renders regardless of state).
+        // Guard: with no rows there is nothing to export. `rows` is empty
+        // whenever the review hasn't successfully loaded (initial load / error),
+        // so this also blocks export before data is ready.
         if (rows.length === 0) {
             toast.push({ title: 'Export CSV', body: 'Nessun dato da esportare ancora.' });
             return;
