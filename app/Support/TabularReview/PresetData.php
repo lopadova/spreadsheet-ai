@@ -108,6 +108,81 @@ class PresetData
         return $out;
     }
 
+    /**
+     * Return a single preset by key, or null when unknown.
+     *
+     * @return array<string, mixed>|null
+     */
+    public static function preset(string $key): ?array
+    {
+        return self::presets()[$key] ?? null;
+    }
+
+    /**
+     * The cooked AI-suggest proposals per preset (ported from `data.jsx`
+     * AI_SUGGESTIONS). Each proposal: {name, format, prompt, enum_values?}.
+     *
+     * @return array<string, list<array<string, mixed>>>
+     */
+    public static function suggestions(): array
+    {
+        return [
+            'returns' => [
+                ['name' => 'Probabilità chargeback 30gg', 'format' => 'percentage', 'prompt' => 'Stima probabilità chargeback nei prossimi 30 giorni in %.'],
+                ['name' => 'Lifetime value cliente', 'format' => 'monetary_amount', 'prompt' => 'LTV stimato del cliente in EUR.'],
+                ['name' => 'Reso fraudolento?', 'format' => 'yes_no', 'prompt' => 'Pattern suggerisce reso fraudolento?'],
+            ],
+            'fraud' => [
+                ['name' => 'Suggerisci nuova regola', 'format' => 'text', 'prompt' => 'Se ricorrente, proponi una regola da aggiungere al motore frode.'],
+                ['name' => 'Cluster simile', 'format' => 'tags_multi', 'prompt' => 'Cluster di pattern simili degli ultimi 30gg.'],
+            ],
+            'articles' => [
+                ['name' => 'Stile di scrittura', 'format' => 'enum', 'prompt' => 'Stile della descrizione.', 'enum_values' => ['Funzionale', 'Emozionale', 'Premium', 'Casual']],
+                ['name' => 'Prezzo competitivo?', 'format' => 'yes_no', 'prompt' => 'Prezzo allineato al competitor?'],
+                ['name' => 'Stagione consigliata', 'format' => 'tag', 'prompt' => 'Stagione di vendita ottimale.'],
+            ],
+            'email' => [
+                ['name' => 'Sentiment subject', 'format' => 'enum', 'prompt' => 'Tono del subject.', 'enum_values' => ['Urgent', 'Soft', 'Curious', 'Promo']],
+                ['name' => 'Score predittivo aperture', 'format' => 'rating', 'prompt' => '1-5 stima aperture vs benchmark.'],
+            ],
+            'formats' => [
+                ['name' => 'Ulteriore demo', 'format' => 'text', 'prompt' => 'Un\'altra colonna text di esempio.'],
+            ],
+        ];
+    }
+
+    /**
+     * Look up the cooked AI cell for a preset's ai_col (by 0-based column
+     * index within ai_cols) and a 0-based row index. Returns the normalized
+     * {value, flag, citation} or null when out of range / unknown.
+     *
+     * @return array{value: mixed, flag: string, citation: string|null}|null
+     */
+    public static function cookedCell(string $presetKey, int $columnIndex, int $rowIndex): ?array
+    {
+        $preset = self::preset($presetKey);
+        if ($preset === null) {
+            return null;
+        }
+
+        $aiCols = $preset['ai_cols'] ?? [];
+        if (! isset($aiCols[$columnIndex])) {
+            return null;
+        }
+
+        $colId = $aiCols[$columnIndex]['id'] ?? null;
+        if ($colId === null) {
+            return null;
+        }
+
+        $cells = $preset['cells'][$colId] ?? null;
+        if (! is_array($cells) || ! array_key_exists($rowIndex, $cells)) {
+            return null;
+        }
+
+        return self::normCell($cells[$rowIndex]);
+    }
+
     private static function returns(): array
     {
         return [

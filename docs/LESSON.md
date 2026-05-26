@@ -3,7 +3,15 @@
 Non-obvious facts, fixes, and gotchas. Append dated entries (`YYYY-MM-DD`),
 most recent first. Every new session and sub-agent should read this.
 
-## 2026-05-26 — M1 local review findings (applied)
+## 2026-05-26 — M2 local Copilot review findings (applied)
+- **`JsonPathResolver::stringifyValue` dead branch** — `$encoded === false` after `JSON_THROW_ON_ERROR` is unreachable; removed.
+- **`persistCell` fallback `json_encode` missing flag** — The degraded encode used `JSON_UNESCAPED_UNICODE` only; added `JSON_THROW_ON_ERROR` for consistency (content is hardcoded-safe primitives, won't throw).
+- **`ColumnRequest` `enum_values` allows empty array** — The `requiredIf` only ensured the field was present, not non-empty. Added `'min:1'` rule. Docblock updated.
+- **`StreamController` catch emitted only ONE red cell** — When `extractRow` throws unexpectedly, the catch block used `$columnIndexes[0] ?? 0` (only marks the first column). Fixed to fan out over all `$columnIndexes` (or all configured columns when null).
+- **`emit()` json_encode false guard** — Without `JSON_THROW_ON_ERROR`, a failed encode would emit `data: false` and corrupt the stream. Added a `false` guard that skips the event.
+- **`StreamController` catch missing log** — Added `Log::warning` so unexpected row throws are visible server-side.
+- **`extractReview` `$force` is dead code** — Documented as reserved for future "skip READY cells" optimisation; currently a no-op (upsert always overwrites).
+
 - **`QUEUE_CONNECTION` must be `sync` in `.env.example`** — Framework default is `database`, but RULES require `sync`. With `database` queue and no worker, queued jobs would silently never run. Fixed in `.env.example`.
 - **`BuiltinWorkflowSeeder` must be gated to `local`/`testing`** — RULES say "demo seeders gate to local/testing environments." The builtin seeder was missing the env check. Fixed — identical gate to `EcommerceDemoSeeder`.
 - **`TABULAR_SSE_PACING_MS` was absent from `.env.example`** — Listed as `env()` key in `config/tabular.php` but not documented in `.env.example`. Added.
