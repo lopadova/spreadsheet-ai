@@ -20,6 +20,8 @@ import {
 import { cellKey, useCellStore } from '../store/cells';
 import { sharedCellStore } from '../store/sharedCellStore';
 import { computeHeroStats } from '../lib/stats';
+import { buildReviewMatrix } from '../lib/exportReview';
+import { toCsv, downloadCsv } from '../lib/csv';
 import { DEFAULT_PRESET, presetMeta } from '../lib/presets';
 import { AgenticGrid } from '../grid/AgenticGrid';
 import { useSseGeneration } from '../grid/useSseGeneration';
@@ -192,6 +194,23 @@ export function TabularPage() {
         [addColumn, runColumns, toast],
     );
 
+    // ---- CSV export ---------------------------------------------------
+    const handleExport = useCallback(() => {
+        const { headers, rows: body } = buildReviewMatrix(
+            baseColumns,
+            aiColumns,
+            rows,
+            sharedCellStore,
+        );
+        const csv = toCsv(headers, body);
+        const ok = downloadCsv(`tabular-${preset}.csv`, csv);
+        toast.push(
+            ok
+                ? { title: 'Export CSV', body: `tabular-${preset}.csv · ${body.length} righe` }
+                : { title: 'Export CSV', body: 'Download non disponibile in questo ambiente.' },
+        );
+    }, [baseColumns, aiColumns, rows, preset, toast]);
+
     // ---- Cell side-panel ----------------------------------------------
     const onCellClicked = useCallback((rowId: string, columnIndex: number) => {
         setCellSel({ rowId, columnIndex });
@@ -246,7 +265,7 @@ export function TabularPage() {
                 <PresetChips active={preset} onPick={setPreset} />
                 <ActionBar
                     onAddColumn={openNewColumn}
-                    onExport={() => toast.push({ title: 'Export XLSX', body: 'Export simulato — demo' })}
+                    onExport={handleExport}
                     onShare={() => toast.push({ title: 'Share', body: 'Share simulato — demo' })}
                     onRun={runAll}
                     onStop={stop}

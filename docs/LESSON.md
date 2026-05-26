@@ -3,6 +3,11 @@
 Non-obvious facts, fixes, and gotchas. Append dated entries (`YYYY-MM-DD`),
 most recent first. Every new session and sub-agent should read this.
 
+## 2026-05-26 — M6 polish / a11y / CSV export
+- **Decorative absolutely-positioned glow caused page horizontal overflow**: `.hero-glow-2` (`right:-120px`, width 360px) widened `.page-content`'s `scrollWidth` ~114px even though `.hero` had `overflow:hidden` — because `.hero-bg` (inset:0) did NOT clip. Fix: `overflow:hidden` on the glow's own wrapper + `right:0`. `getBoundingClientRect` ignores clipping, but a non-clipping ancestor's `scrollWidth` still counts off-edge boxes.
+- **Zoom/overflow e2e assertion**: measure `el.scrollWidth - el.clientWidth <= 2` on `.page-content` at 1280×800, 1024×768, and 853×533 (≈150% zoom). `overflow-x: clip` does NOT create a scroll container, so the check stays honest; the real fix is `flex-wrap` + `min-width:0` on inner clusters.
+- **CSV**: formula-neutralize fields starting with `= + - @ \t \r` (prefix `'`); RFC-4180 quote/escape `" , \n`. Prepend a UTF-8 BOM in `downloadCsv` (not in the pure `toCsv`) so Excel renders €/accents while unit tests keep a clean string. `exportReview.ts` duplicates the grid's mirror cell-text contract (rating `n/5`, `—` for null, empty for pending) as a pure, unit-tested function.
+
 ## 2026-05-26 — GitHub Copilot PR review (PR #6) findings (applied)
 GitHub Copilot DID post inline review comments on PR #6 (it works — just slower than the local CLI). Fixes:
 - **Regenerate-after-edit regression (real bug Copilot surfaced)**: firing `runColumns([idx])` from an effect watching `aiColumns` is fragile — React Query **structural sharing** keeps the same array reference after an optimistic update + identical server payload, so the effect never re-fires and the column never regenerates. Fix: call `runColumns([idx])` **directly in the mutation `onSuccess`** (the column already exists server-side and in cache via `setQueryData`). Removed the `pendingRegenRef` effect entirely. Bonus: regeneration is now instant (e2e dropped from ~1.2min to ~18s).

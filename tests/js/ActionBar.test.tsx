@@ -29,7 +29,7 @@ describe('ActionBar (idle)', () => {
         renderBar();
         expect(screen.getByRole('button', { name: /AI Suggest/i })).toBeInTheDocument();
         expect(screen.getByRole('button', { name: /Add column/i })).toBeInTheDocument();
-        expect(screen.getByRole('button', { name: /Export XLSX/i })).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: /Export CSV/i })).toBeInTheDocument();
         expect(screen.getByRole('button', { name: /Share/i })).toBeInTheDocument();
         expect(screen.getByRole('button', { name: /Run all/i })).toBeInTheDocument();
     });
@@ -46,7 +46,7 @@ describe('ActionBar (idle)', () => {
         const onRun = vi.fn();
         const onAddColumn = vi.fn();
         renderBar({ onExport, onRun, onAddColumn });
-        fireEvent.click(screen.getByRole('button', { name: /Export XLSX/i }));
+        fireEvent.click(screen.getByRole('button', { name: /Export CSV/i }));
         fireEvent.click(screen.getByRole('button', { name: /Run all/i }));
         fireEvent.click(screen.getByRole('button', { name: /Add column/i }));
         expect(onExport).toHaveBeenCalled();

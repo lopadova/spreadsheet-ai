@@ -341,6 +341,13 @@ button {
 .page-content {
     display: flex;
     flex-direction: column;
+    /* Guard against horizontal overflow at narrow widths / 125–150% zoom: the
+       page content must never push past the viewport (e2e asserts
+       scrollWidth <= clientWidth). Children that need scrolling (grid, footer
+       citations) manage their own overflow-x. */
+    width: 100%;
+    max-width: 100%;
+    overflow-x: clip;
 }
 
 /* ============== Top chrome ============== */
@@ -361,6 +368,15 @@ button {
     align-items: center;
     gap: 14px;
     flex: 1;
+    min-width: 0;
+    overflow: hidden;
+}
+.top-chrome-nav {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    min-width: 0;
+    overflow: hidden;
 }
 .top-chrome-right {
     display: flex;
@@ -427,6 +443,9 @@ button {
     inset: 0;
     pointer-events: none;
     z-index: 0;
+    /* Contain the decorative glows so their (off-edge) boxes never widen the
+       page's horizontal scroll width at any zoom level. */
+    overflow: hidden;
 }
 .hero-grid-pattern {
     position: absolute;
@@ -456,7 +475,9 @@ button {
     height: 360px;
     background: oklch(0.7 0.2 var(--ai-h2));
     top: -60px;
-    right: -120px;
+    /* Keep the glow's box inside the viewport so it can't widen page scrollWidth
+       at any zoom (decorative blur still reads as off to the right). */
+    right: 0;
     opacity: 0.35;
 }
 [data-theme='light'] .hero-glow-1 {
@@ -658,12 +679,17 @@ button {
     border-bottom: 1px solid var(--border);
     flex-shrink: 0;
     position: relative;
+    /* Wrap the two clusters instead of overflowing at narrow widths / zoom. */
+    flex-wrap: wrap;
+    gap: 10px;
 }
 .action-bar-left,
 .action-bar-right {
     display: flex;
     align-items: center;
     gap: 8px;
+    flex-wrap: wrap;
+    min-width: 0;
 }
 .divider-v {
     width: 1px;
@@ -765,9 +791,11 @@ button {
     display: flex;
     align-items: center;
     gap: 12px;
+    flex-wrap: wrap;
+    min-width: 0;
 }
 .run-progress-bar {
-    width: 220px;
+    width: clamp(120px, 30vw, 220px);
     height: 6px;
     background: var(--bg-subtle);
     border: 1px solid var(--border);
@@ -961,12 +989,14 @@ button {
     align-items: center;
     gap: 8px;
     flex-wrap: wrap;
+    min-width: 0;
 }
 .status-footer-right {
     display: flex;
     align-items: center;
     gap: 10px;
     overflow-x: auto;
+    min-width: 0;
 }
 .cit-strip {
     display: flex;

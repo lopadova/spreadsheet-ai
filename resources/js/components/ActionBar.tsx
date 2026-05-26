@@ -135,11 +135,16 @@ export function ActionBar({
                     </div>
                 ) : (
                     <>
-                        <button className="btn" type="button" onClick={onExport}>
+                        <button
+                            className="btn"
+                            type="button"
+                            onClick={onExport}
+                            title="Esporta la griglia corrente in CSV"
+                        >
                             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
                                 <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3" />
                             </svg>
-                            Export XLSX
+                            Export CSV
                         </button>
                         <button className="btn" type="button" onClick={onShare}>
                             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
