@@ -52,8 +52,10 @@ export function downloadCsv(filename: string, csv: string): boolean {
     if (typeof document === 'undefined' || typeof URL === 'undefined' || typeof URL.createObjectURL !== 'function') {
         return false;
     }
-    // Prepend a UTF-8 BOM so Excel opens accented characters (é, €) correctly.
-    const blob = new Blob([`﻿${csv}`], { type: 'text/csv;charset=utf-8;' });
+    // Prepend a UTF-8 BOM (explicit U+FEFF, not a literal invisible char in
+    // source) so Excel opens accented characters (é, €) correctly.
+    const bom = String.fromCharCode(0xfeff);
+    const blob = new Blob([bom, csv], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
