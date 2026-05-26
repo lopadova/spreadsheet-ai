@@ -60,8 +60,9 @@ Order per (sub)task: local tests green → **local Copilot review loop** → pus
 - Fix every legitimate finding, re-run local tests, re-run the local review; loop until clean. Then push.
 
 ### Phase 2 — GitHub Copilot review (after push/PR)
-- Request **GitHub Copilot** Code Review on every PR; confirm the review started.
-- Fallback if `gh pr edit <PR> --add-reviewer @copilot` fails (missing `read:project`): GraphQL `requestReviewsByLogin` with `botLogins: ["copilot-pull-request-reviewer[bot]"]`, `union: true`.
+- Request **GitHub Copilot** Code Review via the REST endpoint (verified working on PR #1):
+  `gh api --method POST repos/<owner>/<repo>/pulls/<PR>/requested_reviewers -f 'reviewers[]=copilot-pull-request-reviewer[bot]'`
+- Confirm it started: `gh pr view <PR> --json reviewRequests` must list the `Copilot` bot. `gh pr edit --add-reviewer @copilot` is a silent no-op — do not rely on it.
 - Do not use `@codex review` unless the user explicitly asks.
 - Fold Copilot learnings (local + GitHub) into `docs/LESSON.md`.
 

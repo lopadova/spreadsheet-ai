@@ -47,11 +47,16 @@ $(git diff origin/main...HEAD)"
 
 Fix every legitimate finding, re-run the local tests, re-run this local review, and loop until clean. Only then push. Record non-obvious findings in `docs/LESSON.md`.
 
-### Requesting GitHub Copilot review (step 4 — fallback)
-Prefer `gh pr edit <PR> --add-reviewer @copilot`. If the token lacks `read:project`
-this can fail before requesting — fall back to the GraphQL `requestReviewsByLogin`
-mutation with `botLogins: ["copilot-pull-request-reviewer[bot]"]` and `union: true`.
-Do NOT substitute `@codex review` unless the user explicitly asks.
+### Requesting GitHub Copilot review (step 4)
+**Working method (verified PR #1):** the REST endpoint —
+```bash
+gh api --method POST repos/<owner>/<repo>/pulls/<PR>/requested_reviewers \
+  -f 'reviewers[]=copilot-pull-request-reviewer[bot]'
+```
+Then verify: `gh pr view <PR> --json reviewRequests` must list the `Copilot` bot.
+`gh pr edit <PR> --add-reviewer @copilot` returns exit 0 but is a **silent no-op**
+(does NOT actually request Copilot) — do not trust it. Do NOT substitute
+`@codex review` unless the user explicitly asks.
 
 ## Sub-agent strategy
 - Spawn sub-agents for disjoint write scopes (backend vs frontend). Hand each one `docs/LESSON.md` + `docs/plan.md` + `docs/RULES.md` + this file in its prompt.

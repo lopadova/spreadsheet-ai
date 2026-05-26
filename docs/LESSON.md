@@ -37,6 +37,15 @@ See `docs/plan.md §1.A` for the full annotated list (findings 1–9 with task a
 - Argument list limit: passing the full diff inline (`$(git diff …)`) overflows the OS arg limit on large diffs → write the diff to a gitignored file and tell Copilot to read it.
 - It consumes premium requests/tokens; one M0 docs review = ~2 premium requests, ~9 min.
 
+### Requesting GitHub Copilot PR review — the method that ACTUALLY works
+- ✅ Works: REST `gh api --method POST repos/<owner>/<repo>/pulls/<PR>/requested_reviewers -f 'reviewers[]=copilot-pull-request-reviewer[bot]'`. Verified on PR #1 — Copilot bot (login `Copilot`, type Bot, app `copilot-pull-request-reviewer`) lands in `requested_reviewers`.
+- ❌ `gh pr edit <PR> --add-reviewer @copilot` returns exit 0 but is a **silent no-op** (reviewRequests stays empty). Do not trust its exit code.
+- ❌ There is no `requestReviewsByLogin` GraphQL mutation (the reference repo's note was inaccurate). Use the REST endpoint above.
+- Verify with `gh pr view <PR> --json reviewRequests`.
+
+### Repo license mismatch (TODO M7)
+- The GitHub repo was initialized with **Apache-2.0** (`LICENSE`), but the article/README badges say **MIT**. Decide in M7: align README badges to Apache-2.0, or relicense to MIT. Don't claim MIT in the README until resolved.
+
 ### Review workflow — two-phase Copilot (rationale)
 Phase 1 = local Copilot review before push; Phase 2 = GitHub Copilot PR review after push.
 Full workflow (commands + fallbacks): see `AGENTS.md §Branch & PR loop` and `docs/RULES.md §Review rules`.
