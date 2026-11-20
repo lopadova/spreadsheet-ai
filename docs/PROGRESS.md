@@ -5,7 +5,8 @@ Live "where am I" log. Newest first. Resume from the top after any interruption.
 ## 2026-11-20 — Linux VM quickstart
 - Installed Composer 2.11.2 and PHP 8.4 for the checked-in lockfile; installed dependencies, generated `.env`/app key, and seeded SQLite. Local PHPUnit 65/341, Vitest 112/112, typecheck, build, and Playwright 17/17 pass.
 - Tailwind's automatic scan included unrelated project directories inside this checkout and tried to resolve their `banner.png` class. Scoped scanning to `resources/views` and `resources/js` with `source(none)`; production build now passes.
-- Updated README's actual PHP prerequisite and split the inline shell comments that caused the copied `cp` command to fail in zsh. PR review gates pending.
+- Updated README's actual PHP prerequisite and split the inline shell comments that caused the copied `cp` command to fail in zsh. Local Copilot review flagged the stale `composer.json` PHP constraint; aligned it and the governance docs to `^8.4`. PR review gates pending.
+- Repeated local Playwright runs exposed shared-database state pollution from column mutation tests. Added a per-run seeded SQLite server with 20 ms mock pacing. Full Playwright 17/17 and a targeted rerun passed; the temporary database was removed and the demo database was unchanged. Final review gates pending.
 
 ## 2026-05-26
 

@@ -4,9 +4,6 @@ const PORT = 8123;
 const baseURL = `http://127.0.0.1:${PORT}`;
 
 // NOTE: e2e expects built Vite assets. Run `npm run build` before `npm run e2e`.
-// As of M3 the `/` page fetches `/api/reviews/{preset}`, so the DB MUST be seeded
-// first: `php artisan migrate:fresh --seed` (Herd PHP). Playwright auto-starts
-// `artisan serve` on 127.0.0.1:8123 but does not seed for you.
 export default defineConfig({
     testDir: './tests/e2e',
     // SSE streams block the single `artisan serve` PHP worker for the duration
@@ -28,9 +25,10 @@ export default defineConfig({
         },
     ],
     webServer: {
-        command: `node scripts/run-php.mjs artisan serve --host=127.0.0.1 --port=${PORT}`,
+        command: `node scripts/run-e2e-server.mjs ${PORT}`,
         url: baseURL,
-        reuseExistingServer: !process.env.CI,
+        reuseExistingServer: false,
+        gracefulShutdown: { signal: 'SIGTERM', timeout: 5_000 },
         timeout: 120_000,
     },
 });

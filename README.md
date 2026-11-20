@@ -193,7 +193,7 @@ vendor/bin/phpunit      # backend (PHPUnit)
 npm run typecheck       # TypeScript
 npm run test            # frontend units (Vitest)
 npm run build           # Vite build
-npm run e2e             # Playwright (run `npm run build` + migrate:fresh --seed first)
+npm run e2e             # Playwright (run `npm run build` first; tests seed isolated SQLite)
 ```
 
 Every pull request runs the full gate in **GitHub Actions**
