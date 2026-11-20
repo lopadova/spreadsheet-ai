@@ -174,7 +174,7 @@ Objective / Implementation / Guardrails (tests).
 - **M7.1** `.github/workflows/ci.yml`: PHP 8.4 + Node, `phpunit` + `vitest` (threads pool) + `vite build` + Playwright (chromium), artifacts on failure.
   - Guardrails: CI green on a trivial PR.
 - **M7.2** **WOW community `README.md`** (top-tier OSS quality):
-  - Header **badges** (License MIT, Laravel 13, React 19, Vite, Tailwind v4, PHP 8.4+, tests/CI, PRs welcome, `laravel/ai`).
+  - Header **badges** (License Apache-2.0, Laravel 13, React 19, Vite, Tailwind v4, PHP 8.4+, tests/CI, PRs welcome, `laravel/ai`).
   - **Banner** image right under the title: `resources/Tabular-Review-Banner.png`.
   - **Table of Contents**.
   - **The idea & the intuition** — narrate the "domino" moment from the article; the pattern is back-office triage, not just legal.

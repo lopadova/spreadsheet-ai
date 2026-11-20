@@ -28,6 +28,7 @@ const server = spawn(
     ['scripts/run-php.mjs', 'artisan', 'serve', '--host=127.0.0.1', `--port=${port}`],
     { cwd: root, env, stdio: 'inherit' },
 );
+let shuttingDown = false;
 
 server.on('error', (error) => {
     console.error(error);
@@ -35,8 +36,14 @@ server.on('error', (error) => {
 
 server.on('close', (code, signal) => {
     rmSync(directory, { recursive: true });
-    process.exitCode = code ?? (signal ? 1 : 0);
+    process.exitCode = shuttingDown ? 0 : (code ?? (signal ? 1 : 0));
 });
 
-process.on('SIGTERM', () => server.kill('SIGTERM'));
-process.on('SIGINT', () => server.kill('SIGINT'));
+process.on('SIGTERM', () => {
+    shuttingDown = true;
+    server.kill('SIGTERM');
+});
+process.on('SIGINT', () => {
+    shuttingDown = true;
+    server.kill('SIGINT');
+});
