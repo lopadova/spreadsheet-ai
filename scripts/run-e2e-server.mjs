@@ -8,7 +8,15 @@ const root = dirname(dirname(fileURLToPath(import.meta.url)));
 const port = process.argv[2] ?? '8123';
 const directory = mkdtempSync(join(tmpdir(), 'spreadsheet-ai-e2e-'));
 const database = join(directory, 'database.sqlite');
-const env = { ...process.env, DB_DATABASE: database, TABULAR_SSE_PACING_MS: '20' };
+const env = {
+    ...process.env,
+    APP_ENV: 'testing',
+    DB_CONNECTION: 'sqlite',
+    DB_URL: '',
+    DB_DATABASE: database,
+    TABULAR_AI_MOCK: 'true',
+    TABULAR_SSE_PACING_MS: '20',
+};
 
 closeSync(openSync(database, 'wx'));
 

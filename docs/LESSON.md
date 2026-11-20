@@ -10,6 +10,7 @@ most recent first. Every new session and sub-agent should read this.
 - Playwright's streaming tests mutate review columns. Reusing the demo SQLite file across runs can leave extra columns and make the exact 112-cell assertion miss its target. The Playwright web server now migrates and seeds a fresh temporary SQLite database for each run and removes it on shutdown. Its mock pacing is 20 ms per cell, preserving visible streaming while leaving room for slow VM I/O under the 30-second test deadline.
 - Local Copilot review found two follow-ups: the Playwright server wrapper should exit successfully when Playwright deliberately sends SIGTERM, and the plan's old badge task still said MIT after the repository standardized on Apache-2.0. Both were corrected.
 - The Playwright server starts PHP through `run-php.mjs`. Forward SIGINT/SIGTERM through that wrapper so shutdown does not orphan Artisan/PHP children; treat a child close with no exit code as failure unless shutdown was intentional.
+- Playwright's temporary SQLite database is not isolated if inherited `DB_CONNECTION` or `DB_URL` overrides the runner's `DB_DATABASE`; force SQLite and clear `DB_URL` in the child environment. Also force `APP_ENV=testing` and Mock mode so host settings cannot change the fixture or issue live model calls.
 
 ## 2026-05-26 — v1.0.0 close-out
 - Security: bumped `symfony/polyfill-intl-idn` v1.37.0 → v1.38.1 (CVE-2026-46644); `composer audit` clean. Only `composer.lock` changed (constraint untouched).
