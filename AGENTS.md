@@ -63,7 +63,7 @@ Then verify: `gh pr view <PR> --json reviewRequests` must list the `Copilot` bot
 - Worker write scopes must not overlap.
 
 ## Environment (Windows / Herd)
-- Use **Herd PHP** (`%USERPROFILE%\.config\herd\bin\php84\php.exe`), not XAMPP. Set `PHP_BINARY` if `php` is not on PATH. (Herd PHP 8.4 satisfies the `^8.3` composer constraint.)
+- Use **Herd PHP** (`%USERPROFILE%\.config\herd\bin\php84\php.exe`), not XAMPP. Set `PHP_BINARY` if `php` is not on PATH. (Herd PHP 8.4 satisfies the `^8.4` composer constraint.)
 - Run the PHPUnit gate through an `npm run phpunit` wrapper (`scripts/run-php.mjs`) to avoid stale PATH / XAMPP resolution.
 - Vitest in CI: `pool: 'threads'`, `LARAVEL_BYPASS_ENV_CHECK=1`. Validate lockfiles with `npx npm@10 ci --dry-run`.
 - If a gate is blocked by sandbox/network, record the exact blocker in `docs/PROGRESS.md` — do not silently skip.

@@ -23,6 +23,13 @@ const php = resolvePhp();
 const args = process.argv.slice(2);
 
 const child = spawn(php, args, { stdio: 'inherit', shell: false });
+const signalHandlers = new Map();
+
+for (const signal of ['SIGINT', 'SIGTERM']) {
+    const handler = () => child.kill(signal);
+    signalHandlers.set(signal, handler);
+    process.on(signal, handler);
+}
 
 child.on('error', (err) => {
     console.error(`Failed to launch PHP (${php}): ${err.message}`);
@@ -30,6 +37,10 @@ child.on('error', (err) => {
 });
 
 child.on('exit', (code, signal) => {
+    for (const [forwardedSignal, handler] of signalHandlers) {
+        process.off(forwardedSignal, handler);
+    }
+
     if (signal) {
         process.kill(process.pid, signal);
         return;

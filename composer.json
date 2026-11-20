@@ -6,7 +6,7 @@
     "keywords": ["laravel", "ai", "tabular-review", "agentic-grid", "react", "glide-data-grid"],
     "license": "Apache-2.0",
     "require": {
-        "php": "^8.3",
+        "php": "^8.4",
         "laravel/ai": ">=0.6,<0.6.8",
         "laravel/framework": "^13.8",
         "laravel/tinker": "^3.0"

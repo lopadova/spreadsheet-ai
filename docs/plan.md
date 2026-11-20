@@ -28,7 +28,7 @@ Inspiration & sources (read these, do not re-derive):
 3. **LLM = Mock mode by default + a Live toggle.** Mock returns the cooked preset cells (zero cost, works offline). Live calls real `laravel/ai` (Anthropic `claude-haiku-4.5` default, provider configurable). Demo runs out-of-the-box with no API key.
 
 ### Stack
-- Backend: **Laravel 13**, PHP `^8.3`, SQLite, `laravel/ai` (`>=0.6,<0.6.8`), queue `sync`.
+- Backend: **Laravel 13**, PHP `^8.4`, SQLite, `laravel/ai` (`>=0.6,<0.6.8`), queue `sync`.
 - Frontend: **React 19 + Vite (latest) + Tailwind v4** + **@glideapps/glide-data-grid** (canvas) + **TanStack Query**. Served via a Blade shell + Vite (same pattern as the reference admin repo).
 - Tests: **PHPUnit** (backend), **Vitest** (frontend units), **Playwright** (UI/UX scenarios — mandatory for every interactive feature).
 - Design tokens: Geist Sans / Geist Mono, dark default, violet accent, oklch status palette (lifted from `project/styles.css`).
@@ -174,7 +174,7 @@ Objective / Implementation / Guardrails (tests).
 - **M7.1** `.github/workflows/ci.yml`: PHP 8.4 + Node, `phpunit` + `vitest` (threads pool) + `vite build` + Playwright (chromium), artifacts on failure.
   - Guardrails: CI green on a trivial PR.
 - **M7.2** **WOW community `README.md`** (top-tier OSS quality):
-  - Header **badges** (License MIT, Laravel 13, React 19, Vite, Tailwind v4, PHP 8.3+, tests/CI, PRs welcome, `laravel/ai`).
+  - Header **badges** (License Apache-2.0, Laravel 13, React 19, Vite, Tailwind v4, PHP 8.4+, tests/CI, PRs welcome, `laravel/ai`).
   - **Banner** image right under the title: `resources/Tabular-Review-Banner.png`.
   - **Table of Contents**.
   - **The idea & the intuition** — narrate the "domino" moment from the article; the pattern is back-office triage, not just legal.

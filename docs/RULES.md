@@ -10,7 +10,7 @@ Binding rules. Adapted from `product_image_discovery_admin/docs/RULES.md`.
 - Narrative/feature reference: `%USERPROFILE%\Downloads\medium\SpreadsheetAi\article-bozza-italiano.md`.
 
 ## Implementation defaults
-- Laravel 13, PHP `^8.3` (local Windows runtime: Herd `php84` at `%USERPROFILE%\.config\herd\bin\php84\php.exe`). SQLite (`database/database.sqlite`). Queue `sync`.
+- Laravel 13, PHP `^8.4` (local Windows runtime: Herd `php84` at `%USERPROFILE%\.config\herd\bin\php84\php.exe`). SQLite (`database/database.sqlite`). Queue `sync`.
 - LLM via `laravel/ai` (`>=0.6,<0.6.8` — upper bound pinned at scaffolding time; verify no breaking changes before M2 and widen if safe). Default provider Anthropic, model `claude-haiku-4.5`. `AI_MOCK=true` by default.
 - Frontend: Blade shell + Vite + React 19 + Tailwind v4 + Glide Data Grid + TanStack Query.
 - API under `/api/...`. SSE stream is synchronous (no Redis/Horizon).

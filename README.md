@@ -12,7 +12,7 @@ cell‑by‑cell.
 [![CI](https://github.com/lopadova/spreadsheet-ai/actions/workflows/ci.yml/badge.svg)](https://github.com/lopadova/spreadsheet-ai/actions/workflows/ci.yml)
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 ![Laravel 13](https://img.shields.io/badge/Laravel-13-FF2D20?logo=laravel&logoColor=white)
-![PHP 8.3+](https://img.shields.io/badge/PHP-8.3%2B-777BB4?logo=php&logoColor=white)
+![PHP 8.4+](https://img.shields.io/badge/PHP-8.4%2B-777BB4?logo=php&logoColor=white)
 ![laravel/ai](https://img.shields.io/badge/laravel%2Fai-0.6-FF2D20)
 ![React 19](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black)
 ![Vite 8](https://img.shields.io/badge/Vite-8-646CFF?logo=vite&logoColor=white)
@@ -103,7 +103,7 @@ Three deliberate decisions keep this a clonable, zero‑setup demo:
 2. **Synchronous SSE** — the stream endpoint iterates rows, calls the extractor, and echoes `cell` events as they land. No Redis/Horizon.
 3. **Mock mode by default + a Live toggle** — works offline; flip to real `laravel/ai` (Anthropic `claude-haiku-4-5`) when you add a key.
 
-**Stack:** Laravel 13 · PHP 8.3+ · `laravel/ai` · SQLite — and React 19 · Vite 8 ·
+**Stack:** Laravel 13 · PHP 8.4+ · `laravel/ai` · SQLite — and React 19 · Vite 8 ·
 Tailwind v4 · `@glideapps/glide-data-grid` · TanStack Query.
 
 ```
@@ -121,7 +121,7 @@ Browser (React 19)                         Laravel 13
 
 ## Quickstart (junior‑proof, step by step)
 
-> Prereqs: **PHP 8.3+**, **Composer**, **Node 22+** & **npm**. (On Windows, [Laravel Herd](https://herd.laravel.com/) gives you PHP + Composer in one click.)
+> Prereqs: **PHP 8.4+**, **Composer**, **Node 22+** & **npm**. The checked-in lockfile requires PHP 8.4 (`symfony/clock` v8); Ubuntu 24.04's default PHP 8.3 is insufficient. On Windows, [Laravel Herd](https://herd.laravel.com/) provides PHP and Composer.
 
 ```bash
 # 1. Clone
@@ -133,9 +133,11 @@ composer install
 npm install
 
 # 3. Create your env + app key + the SQLite database file
-cp .env.example .env          # Windows: copy .env.example .env
+# Windows: copy .env.example .env
+cp .env.example .env
 php artisan key:generate
-touch database/database.sqlite   # Windows: ni database/database.sqlite
+# Windows: ni database/database.sqlite
+touch database/database.sqlite
 #   (the DB defaults to SQLite at database/database.sqlite)
 
 # 4. Create the schema and load the demo data (returns, orders, articles, campaigns)
@@ -191,7 +193,7 @@ vendor/bin/phpunit      # backend (PHPUnit)
 npm run typecheck       # TypeScript
 npm run test            # frontend units (Vitest)
 npm run build           # Vite build
-npm run e2e             # Playwright (run `npm run build` + migrate:fresh --seed first)
+npm run e2e             # Playwright (run `npm run build` first; tests seed isolated SQLite)
 ```
 
 Every pull request runs the full gate in **GitHub Actions**

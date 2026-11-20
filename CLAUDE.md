@@ -27,7 +27,7 @@ flag + citation. Laravel 13 + React/Vite/Tailwind + Glide Data Grid + `laravel/a
 - Persist cells via atomic upsert keyed `(review_id, row_id, column_index)`.
 - `url` cells: only `http:`/`https:`; CSV export: neutralize `= + - @` formula prefixes.
 - Dense UI, radius ≤ 8px, no nested cards, every icon button has an aria-label/title.
-- Windows/Herd: use Herd PHP 8.4 (satisfies the `^8.3` composer constraint), not XAMPP; run phpunit via the `npm run phpunit` wrapper.
+- Windows/Herd: use Herd PHP 8.4 (satisfies the `^8.4` composer constraint), not XAMPP; run phpunit via the `npm run phpunit` wrapper.
 
 ## 17 column formats (single source of truth = `FormatType` enum)
 text · bulleted_list · number · percentage · monetary_amount · currency · yes_no ·
