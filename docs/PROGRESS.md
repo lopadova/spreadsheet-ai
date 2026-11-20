@@ -7,6 +7,7 @@ Live "where am I" log. Newest first. Resume from the top after any interruption.
 - Tailwind's automatic scan included unrelated project directories inside this checkout and tried to resolve their `banner.png` class. Scoped scanning to `resources/views` and `resources/js` with `source(none)`; production build now passes.
 - Updated README's actual PHP prerequisite and split the inline shell comments that caused the copied `cp` command to fail in zsh. Local Copilot review flagged the stale `composer.json` PHP constraint; aligned it and the governance docs to `^8.4`. PR review gates pending.
 - Repeated local Playwright runs exposed shared-database state pollution from column mutation tests. Added a per-run seeded SQLite server with 20 ms mock pacing. Full Playwright 17/17 and a targeted rerun passed; the temporary database was removed and the demo database was unchanged. Local Copilot review corrected graceful shutdown status and a stale license reference. Final review gates pending.
+- Follow-up review fixed PHP child-process signal forwarding and nonzero status on unexpected server launch failure. Composer validate, PHPUnit 65/341, Vitest 112/112, typecheck, build, and Playwright 17/17 passed again after these changes.
 
 ## 2026-05-26
 

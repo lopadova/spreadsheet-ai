@@ -36,7 +36,7 @@ server.on('error', (error) => {
 
 server.on('close', (code, signal) => {
     rmSync(directory, { recursive: true });
-    process.exitCode = shuttingDown ? 0 : (code ?? (signal ? 1 : 0));
+    process.exitCode = shuttingDown ? 0 : (code ?? 1);
 });
 
 process.on('SIGTERM', () => {
