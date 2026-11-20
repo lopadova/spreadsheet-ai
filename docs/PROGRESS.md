@@ -2,6 +2,11 @@
 
 Live "where am I" log. Newest first. Resume from the top after any interruption.
 
+## 2026-11-20 — Linux VM quickstart
+- Installed Composer 2.11.2 and PHP 8.4 for the checked-in lockfile; installed dependencies, generated `.env`/app key, and seeded SQLite. Local PHPUnit 65/341, Vitest 112/112, typecheck, build, and Playwright 17/17 pass.
+- Tailwind's automatic scan included unrelated project directories inside this checkout and tried to resolve their `banner.png` class. Scoped scanning to `resources/views` and `resources/js` with `source(none)`; production build now passes.
+- Updated README's actual PHP prerequisite and split the inline shell comments that caused the copied `cp` command to fail in zsh. PR review gates pending.
+
 ## 2026-05-26
 
 ### Done

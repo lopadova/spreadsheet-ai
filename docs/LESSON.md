@@ -3,6 +3,11 @@
 Non-obvious facts, fixes, and gotchas. Append dated entries (`YYYY-MM-DD`),
 most recent first. Every new session and sub-agent should read this.
 
+## 2026-11-20 — Linux VM quickstart
+- `composer.json` permits PHP `^8.3`, but the checked-in `composer.lock` pins `symfony/clock` v8.0.8, which requires PHP `>=8.4`; use PHP 8.4 for a locked install until the lockfile changes.
+- Tailwind v4 automatically scans the working directory even with explicit `@source` entries. Unrelated nested project trees can contribute classes such as `bg-[url('@/assets/banner.png')]` and break Vite asset resolution. `@import 'tailwindcss' source(none)` plus explicit app source directories keeps the build scoped.
+- zsh does not treat interactive `#` as a comment unless `INTERACTIVE_COMMENTS` is enabled. Keep README shell comments on their own lines so copy-pasted commands work with default zsh settings.
+
 ## 2026-05-26 — v1.0.0 close-out
 - Security: bumped `symfony/polyfill-intl-idn` v1.37.0 → v1.38.1 (CVE-2026-46644); `composer audit` clean. Only `composer.lock` changed (constraint untouched).
 - README WOW + alignment verified: chip labels match `presets.ts`, model `claude-haiku-4-5`, Apache-2.0 everywhere (incl. composer.json), Node 22, sqlite create step, 17 format types / 16-column showcase. No drift.
